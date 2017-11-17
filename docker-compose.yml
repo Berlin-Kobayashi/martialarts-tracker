@@ -5,4 +5,6 @@ services:
     image: golang:1.9
     volumes:
       - .:/go/src/github.com/DanShu93/martialarts-tracker
-    command: sleep 3600
+    command: go run /go/src/github.com/DanShu93/martialarts-tracker/service.go
+    ports:
+      - 8888:80
