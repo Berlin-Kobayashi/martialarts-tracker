@@ -1,0 +1,8 @@
+version: "3.3"
+
+services:
+  martialarts-tracker-app:
+    image: golang:1.9
+    volumes:
+      - .:/go/src/github.com/DanShu93/martialarts-tracker
+    command: sleep 3600
