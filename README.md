@@ -2,9 +2,9 @@
 
 ## Setup
 
-### Immutable image
+### Immutable Image
 `docker build -t martialarts-tracker .`
 `docker run martialarts-tracker`
 
-### Dev environment
+### Dev Environment
 `docker-compose up`
