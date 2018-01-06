@@ -1,0 +1,27 @@
+{
+  "series": "JKD I Dan",
+  "techniques": [
+    {
+      "type": "counter",
+      "name": "pak sao",
+      "description": "Means slapping hand\nCounter a jab by slapping the elbow of the opponent into his body, destroying his structure\nAt the same time perform a jab"
+    }
+  ],
+  "methods": [
+    {
+      "type": "counter",
+      "name": "Pak Sao drill",
+      "description": "",
+      "covers": [
+        "Pak Sao"
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "type": "Sparring",
+      "name": "Lead hand sparring",
+      "description": "Sparing with lead hand punches only"
+    }
+  ]
+}
