@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"encoding/json"
+	"io/ioutil"
 )
 
 type TrainingUnit struct {
@@ -51,42 +52,56 @@ type TrainingUnitService struct {
 }
 
 func (s TrainingUnitService) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	rw.Header().Add("Content-Type", "application/json")
 
-	pakSao := Technique{
-		Kind:        "counter",
-		Name:        "pak sao",
-		Description: "Means slapping hand\nCounter a jab by slapping the elbow of the opponent into his body, destroying his structure\nAt the same time perform a jab",
-	}
+	switch r.Method {
+	case http.MethodGet:
+		rw.Header().Add("Content-Type", "application/json")
 
-	trainingUnit := TrainingUnit{
-		Series: "JKD I",
-		Techniques: []Technique{
-			pakSao,
-		},
-		Methods: []Method{
-			{
-				Kind:        "counter",
-				Name:        "Pak Sao drill",
-				Description: "",
-				Covers:      []Technique{pakSao},
+		pakSao := Technique{
+			Kind:        "counter",
+			Name:        "pak sao",
+			Description: "Means slapping hand\nCounter a jab by slapping the elbow of the opponent into his body, destroying his structure\nAt the same time perform a jab",
+		}
+
+		trainingUnit := TrainingUnit{
+			Series: "JKD I",
+			Techniques: []Technique{
+				pakSao,
 			},
-		},
-		Exercises: []Exercise{
-			{
-				Kind:        "Sparring",
-				Name:        "Lead hand sparring",
-				Description: "Sparing with lead hand punches only",
+			Methods: []Method{
+				{
+					Kind:        "counter",
+					Name:        "Pak Sao drill",
+					Description: "",
+					Covers:      []Technique{pakSao},
+				},
 			},
-		},
-	}
+			Exercises: []Exercise{
+				{
+					Kind:        "Sparring",
+					Name:        "Lead hand sparring",
+					Description: "Sparing with lead hand punches only",
+				},
+			},
+		}
 
-	jsonString, err := json.Marshal(trainingUnit)
-	if err != nil {
-		panic(err)
-	}
+		jsonString, err := json.Marshal(trainingUnit)
+		if err != nil {
+			panic(err)
+		}
 
-	rw.Write(jsonString)
+		rw.Write(jsonString)
+	case http.MethodPost:
+		content, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			panic(err)
+		}
+
+		err = ioutil.WriteFile("/go/src/github.com/DanShu93/martialarts-tracker/data/training1.json",content, 0644)
+		if err != nil {
+			panic(err)
+		}
+	}
 }
 
 func main() {
