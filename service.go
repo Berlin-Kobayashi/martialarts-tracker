@@ -32,6 +32,23 @@ type Exercise struct {
 	Description string
 }
 
+type TrainingUnitRepository interface {
+	Save(trainingUnit TrainingUnit) error
+}
+
+type FileTrainingUnitRepository struct {
+}
+
+func (s FileTrainingUnitRepository) Save(trainingUnit TrainingUnit) error {
+	jsonString, err := json.Marshal(trainingUnit)
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile("/go/src/github.com/DanShu93/martialarts-tracker/data/training1.json", jsonString, 0644)
+
+}
+
 type FavIconService struct {
 }
 
@@ -49,6 +66,7 @@ func (s MainService) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 }
 
 type TrainingUnitService struct {
+	repository TrainingUnitRepository
 }
 
 func (s TrainingUnitService) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
@@ -102,12 +120,7 @@ func (s TrainingUnitService) ServeHTTP(rw http.ResponseWriter, r *http.Request) 
 			rw.WriteHeader(http.StatusBadRequest)
 		}
 
-		jsonString, err := json.Marshal(trainingUnit)
-		if err != nil {
-			rw.WriteHeader(http.StatusInternalServerError)
-		}
-
-		err = ioutil.WriteFile("/go/src/github.com/DanShu93/martialarts-tracker/data/training1.json", jsonString, 0644)
+		err = s.repository.Save(trainingUnit)
 		if err != nil {
 			rw.WriteHeader(http.StatusInternalServerError)
 		}
@@ -115,8 +128,10 @@ func (s TrainingUnitService) ServeHTTP(rw http.ResponseWriter, r *http.Request) 
 }
 
 func main() {
+	repository := FileTrainingUnitRepository{}
+
 	http.Handle("/favicon.ico", FavIconService{})
 	http.Handle("/index.html", MainService{})
-	http.Handle("/training-unit", TrainingUnitService{})
+	http.Handle("/training-unit", TrainingUnitService{repository: repository})
 	http.ListenAndServe(":80", nil)
 }
