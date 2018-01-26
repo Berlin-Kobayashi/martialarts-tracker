@@ -52,7 +52,6 @@ type TrainingUnitService struct {
 }
 
 func (s TrainingUnitService) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-
 	switch r.Method {
 	case http.MethodGet:
 		rw.Header().Add("Content-Type", "application/json")
@@ -87,19 +86,30 @@ func (s TrainingUnitService) ServeHTTP(rw http.ResponseWriter, r *http.Request) 
 
 		jsonString, err := json.Marshal(trainingUnit)
 		if err != nil {
-			panic(err)
+			rw.WriteHeader(http.StatusInternalServerError)
 		}
 
 		rw.Write(jsonString)
 	case http.MethodPost:
 		content, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			panic(err)
+			rw.WriteHeader(http.StatusInternalServerError)
 		}
 
-		err = ioutil.WriteFile("/go/src/github.com/DanShu93/martialarts-tracker/data/training1.json",content, 0644)
+		trainingUnit := TrainingUnit{}
+		err = json.Unmarshal(content, &trainingUnit)
 		if err != nil {
-			panic(err)
+			rw.WriteHeader(http.StatusBadRequest)
+		}
+
+		jsonString, err := json.Marshal(trainingUnit)
+		if err != nil {
+			rw.WriteHeader(http.StatusInternalServerError)
+		}
+
+		err = ioutil.WriteFile("/go/src/github.com/DanShu93/martialarts-tracker/data/training1.json", jsonString, 0644)
+		if err != nil {
+			rw.WriteHeader(http.StatusInternalServerError)
 		}
 	}
 }
