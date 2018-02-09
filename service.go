@@ -32,39 +32,6 @@ type Exercise struct {
 	Description string
 }
 
-type TrainingUnitRepository interface {
-	Save(trainingUnit TrainingUnit) error
-}
-
-type FileTrainingUnitRepository struct {
-}
-
-func (s FileTrainingUnitRepository) Save(trainingUnit TrainingUnit) error {
-	jsonString, err := json.Marshal(trainingUnit)
-	if err != nil {
-		return err
-	}
-
-	return ioutil.WriteFile("/go/src/github.com/DanShu93/martialarts-tracker/data/training1.json", jsonString, 0644)
-
-}
-
-type FavIconService struct {
-}
-
-func (s FavIconService) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	rw.Header().Add("Content-Type", "image/x-icon")
-	http.ServeFile(rw, r, "/go/src/github.com/DanShu93/martialarts-tracker/favicon.ico")
-}
-
-type MainService struct {
-}
-
-func (s MainService) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	rw.Header().Add("Content-Type", "text/html")
-	rw.Write([]byte("<link rel=\"shortcut icon\" href=\"http://localhost:8888/favicon.ico\" type=\"image/x-icon\">"))
-}
-
 type TrainingUnitService struct {
 	repository TrainingUnitRepository
 }
@@ -125,6 +92,39 @@ func (s TrainingUnitService) ServeHTTP(rw http.ResponseWriter, r *http.Request) 
 			rw.WriteHeader(http.StatusInternalServerError)
 		}
 	}
+}
+
+type TrainingUnitRepository interface {
+	Save(trainingUnit TrainingUnit) error
+}
+
+type FileTrainingUnitRepository struct {
+}
+
+func (s FileTrainingUnitRepository) Save(trainingUnit TrainingUnit) error {
+	jsonString, err := json.Marshal(trainingUnit)
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile("/go/src/github.com/DanShu93/martialarts-tracker/data/training1.json", jsonString, 0644)
+
+}
+
+type FavIconService struct {
+}
+
+func (s FavIconService) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	rw.Header().Add("Content-Type", "image/x-icon")
+	http.ServeFile(rw, r, "/go/src/github.com/DanShu93/martialarts-tracker/favicon.ico")
+}
+
+type MainService struct {
+}
+
+func (s MainService) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	rw.Header().Add("Content-Type", "text/html")
+	rw.Write([]byte("<link rel=\"shortcut icon\" href=\"http://localhost:8888/favicon.ico\" type=\"image/x-icon\">"))
 }
 
 func main() {
