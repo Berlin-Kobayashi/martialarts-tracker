@@ -1,4 +1,4 @@
-package main
+package martialarts
 
 import (
 	"net/http"
@@ -6,51 +6,8 @@ import (
 	"io/ioutil"
 )
 
-type TrainingUnit struct {
-	Series     string
-	Techniques []Technique
-	Methods    []Method
-	Exercises  []Exercise
-}
-
-type Technique struct {
-	Kind        string
-	Name        string
-	Description string
-}
-
-type Method struct {
-	Kind        string
-	Name        string
-	Description string
-	Covers      []Technique
-}
-
-type Exercise struct {
-	Kind        string
-	Name        string
-	Description string
-}
-
-type TrainingUnitRepository interface {
-	Save(trainingUnit TrainingUnit) error
-}
-
-type FileTrainingUnitRepository struct {
-}
-
-func (s FileTrainingUnitRepository) Save(trainingUnit TrainingUnit) error {
-	jsonString, err := json.Marshal(trainingUnit)
-	if err != nil {
-		return err
-	}
-
-	return ioutil.WriteFile("/go/src/github.com/DanShu93/martialarts-tracker/data/training1.json", jsonString, 0644)
-
-}
-
 type TrainingUnitService struct {
-	repository TrainingUnitRepository
+	Repository TrainingUnitRepository
 }
 
 func (s TrainingUnitService) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
@@ -104,16 +61,9 @@ func (s TrainingUnitService) ServeHTTP(rw http.ResponseWriter, r *http.Request) 
 			rw.WriteHeader(http.StatusBadRequest)
 		}
 
-		err = s.repository.Save(trainingUnit)
+		err = s.Repository.Save(trainingUnit)
 		if err != nil {
 			rw.WriteHeader(http.StatusInternalServerError)
 		}
 	}
-}
-
-func main() {
-	repository := FileTrainingUnitRepository{}
-
-	http.Handle("/training-unit", TrainingUnitService{repository: repository})
-	http.ListenAndServe(":80", nil)
 }
