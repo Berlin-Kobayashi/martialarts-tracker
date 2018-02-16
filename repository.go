@@ -3,8 +3,9 @@ package martialarts
 import (
 	"encoding/json"
 	"io/ioutil"
-	"fmt"
 	"os"
+	"strconv"
+	"regexp"
 )
 
 type TrainingUnitRepository interface {
@@ -39,17 +40,31 @@ func (s FileTrainingUnitRepository) Save(trainingUnit TrainingUnit) error {
 	filename := index + ".json"
 	filePath := seriesDirectoryName + filename
 
-	fmt.Println(filePath)
-
 	return ioutil.WriteFile(filePath, jsonString, 0644)
 }
 
-// TODO implement
 func getCurrentLessonIndex(seriesDirectoryName string) (string, error) {
-	_, err := ioutil.ReadDir(seriesDirectoryName)
+	files, err := ioutil.ReadDir(seriesDirectoryName)
 	if err != nil {
 		return "", err
 	}
 
-	return "1", nil
+	maxIndex := 0
+
+	fileNameRegex := regexp.MustCompile("^(\\d+)\\..*$")
+	for _, f := range files {
+		indexString := fileNameRegex.ReplaceAll([]byte(f.Name()), []byte("$1"))
+		index, err := strconv.Atoi(string(indexString))
+		if err != nil {
+			return "", err
+		}
+
+		if index > maxIndex {
+			maxIndex = index
+		}
+	}
+
+	maxIndex++
+
+	return strconv.Itoa(maxIndex), nil
 }
