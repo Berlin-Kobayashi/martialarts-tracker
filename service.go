@@ -60,9 +60,11 @@ func (s TrainingUnitService) post(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(http.StatusBadRequest)
 	}
 
-	err = s.Repository.Save(trainingUnit)
+	index, err := s.Repository.Save(trainingUnit)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusInternalServerError)
 	}
+
+	rw.Write([]byte(index))
 }

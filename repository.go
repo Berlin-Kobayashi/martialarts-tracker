@@ -9,7 +9,7 @@ import (
 )
 
 type TrainingUnitRepository interface {
-	Save(trainingUnit TrainingUnit) error
+	Save(trainingUnit TrainingUnit) (string, error)
 	Read(trainingSeriesName, trainingUnitIndex string) (TrainingUnit, error)
 }
 
@@ -17,11 +17,11 @@ type FileTrainingUnitRepository struct {
 	DataPath string
 }
 
-func (r FileTrainingUnitRepository) Save(trainingUnit TrainingUnit) error {
+func (r FileTrainingUnitRepository) Save(trainingUnit TrainingUnit) (string, error) {
 	series := trainingUnit.Series
 	jsonString, err := json.Marshal(trainingUnit)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	seriesDirectoryName := r.DataPath + "/" + series + "/"
@@ -29,18 +29,23 @@ func (r FileTrainingUnitRepository) Save(trainingUnit TrainingUnit) error {
 	if _, err := os.Stat(seriesDirectoryName); os.IsNotExist(err) {
 		err = os.Mkdir(seriesDirectoryName, 0744)
 		if err != nil {
-			return err
+			return "", err
 		}
 	}
 
 	index, err := getCurrentLessonIndex(seriesDirectoryName)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	filePath := r.getFilePath(series, index)
 
-	return ioutil.WriteFile(filePath, jsonString, 0644)
+	err = ioutil.WriteFile(filePath, jsonString, 0644)
+	if err != nil {
+		return "", err
+	}
+
+	return index, nil
 }
 
 func (r FileTrainingUnitRepository) getFilePath(trainingSeriesName, trainingUnitIndex string) string {
@@ -82,7 +87,7 @@ func (r FileTrainingUnitRepository) Read(trainingSeriesName, trainingUnitIndex s
 	}
 
 	trainingUnit := TrainingUnit{}
-	err = json.Unmarshal(contents,&trainingUnit)
+	err = json.Unmarshal(contents, &trainingUnit)
 	if err != nil {
 		return TrainingUnit{}, err
 	}
