@@ -10,20 +10,21 @@ import (
 
 type TrainingUnitRepository interface {
 	Save(trainingUnit TrainingUnit) error
+	Read(trainingSeriesName, trainingUnitIndex string) (TrainingUnit, error)
 }
 
 type FileTrainingUnitRepository struct {
 	DataPath string
 }
 
-func (s FileTrainingUnitRepository) Save(trainingUnit TrainingUnit) error {
+func (r FileTrainingUnitRepository) Save(trainingUnit TrainingUnit) error {
 	series := trainingUnit.Series
 	jsonString, err := json.Marshal(trainingUnit)
 	if err != nil {
 		return err
 	}
 
-	seriesDirectoryName := s.DataPath + "/" + series + "/"
+	seriesDirectoryName := r.DataPath + "/" + series + "/"
 
 	if _, err := os.Stat(seriesDirectoryName); os.IsNotExist(err) {
 		err = os.Mkdir(seriesDirectoryName, 0744)
@@ -37,10 +38,13 @@ func (s FileTrainingUnitRepository) Save(trainingUnit TrainingUnit) error {
 		return err
 	}
 
-	filename := index + ".json"
-	filePath := seriesDirectoryName + filename
+	filePath := r.getFilePath(series, index)
 
 	return ioutil.WriteFile(filePath, jsonString, 0644)
+}
+
+func (r FileTrainingUnitRepository) getFilePath(trainingSeriesName, trainingUnitIndex string) string {
+	return r.DataPath + "/" + trainingSeriesName + "/" + trainingUnitIndex + ".json"
 }
 
 func getCurrentLessonIndex(seriesDirectoryName string) (string, error) {
@@ -67,4 +71,21 @@ func getCurrentLessonIndex(seriesDirectoryName string) (string, error) {
 	maxIndex++
 
 	return strconv.Itoa(maxIndex), nil
+}
+
+func (r FileTrainingUnitRepository) Read(trainingSeriesName, trainingUnitIndex string) (TrainingUnit, error) {
+	filePath := r.getFilePath(trainingSeriesName, trainingUnitIndex)
+
+	contents, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return TrainingUnit{}, err
+	}
+
+	trainingUnit := TrainingUnit{}
+	err = json.Unmarshal(contents,&trainingUnit)
+	if err != nil {
+		return TrainingUnit{}, err
+	}
+
+	return trainingUnit, nil
 }
