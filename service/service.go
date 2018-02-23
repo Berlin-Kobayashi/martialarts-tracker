@@ -26,13 +26,11 @@ func (s TrainingUnitService) ServeHTTP(rw http.ResponseWriter, r *http.Request) 
 func (s TrainingUnitService) get(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Add("Content-Type", "application/json")
 
-	trainingUnitRegex := regexp.MustCompile("^/training-unit/([^/]+)/([^/]+)$")
+	trainingUnitRegex := regexp.MustCompile("^/training-unit/([^/]+)$")
 
-	trainingSeriesName := trainingUnitRegex.ReplaceAll([]byte(r.URL.Path), []byte("$1"))
+	trainingUnitIndex := trainingUnitRegex.ReplaceAll([]byte(r.URL.Path), []byte("$1"))
 
-	trainingUnitIndex := trainingUnitRegex.ReplaceAll([]byte(r.URL.Path), []byte("$2"))
-
-	trainingUnit, err := s.Repository.Read(string(trainingSeriesName), string(trainingUnitIndex))
+	trainingUnit, err := s.Repository.Read(string(trainingUnitIndex))
 	if err != nil {
 		fmt.Println(err)
 		switch err {
@@ -43,12 +41,16 @@ func (s TrainingUnitService) get(rw http.ResponseWriter, r *http.Request) {
 		default:
 			rw.WriteHeader(http.StatusInternalServerError)
 		}
+
+		return
 	}
 
 	trainingUnitJSON, err := json.Marshal(trainingUnit)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusInternalServerError)
+
+		return
 	}
 
 	rw.Write(trainingUnitJSON)
@@ -66,12 +68,16 @@ func (s TrainingUnitService) post(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusBadRequest)
+
+		return
 	}
 
 	index, err := s.Repository.Save(trainingUnit)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusInternalServerError)
+
+		return
 	}
 
 	rw.Write([]byte(index))

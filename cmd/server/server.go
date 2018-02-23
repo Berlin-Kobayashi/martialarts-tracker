@@ -7,7 +7,15 @@ import (
 )
 
 func main() {
-	repo := repository.FileTrainingUnitRepository{DataPath: "/go/src/github.com/DanShu93/martialarts-tracker/data/trainingunits"}
+	repo, err := repository.NewMongoRepository(
+		"martialarts-tracker-db:27017",
+		"martialarts",
+		"training_units",
+	)
+
+	if err != nil {
+		panic(err)
+	}
 
 	http.Handle("/training-unit/", service.TrainingUnitService{Repository: repo})
 	http.Handle("/training-unit", service.TrainingUnitService{Repository: repo})

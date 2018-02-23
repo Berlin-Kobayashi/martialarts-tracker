@@ -41,6 +41,6 @@ func (s DummyTrainingUnitRepository) Save(trainingUnit entity.TrainingUnit) (str
 	return "1", nil
 }
 
-func (s DummyTrainingUnitRepository) Read(trainingSeriesName, trainingUnitIndex string) (entity.TrainingUnit, error) {
+func (s DummyTrainingUnitRepository) Read(trainingUnitIndex string) (entity.TrainingUnit, error) {
 	return TrainingUnitFixture, nil
 }

@@ -4,8 +4,8 @@ services:
   martialarts-tracker-app:
     image: golang:1.9
     volumes:
-      - .:/go/src/github.com/DanShu93/martialarts-tracker
-    command: go run /go/src/github.com/DanShu93/martialarts-tracker/cmd/server/server.go
+      - ./../../../:/go/src/
+    command: bash -c "cd /go/src/github.com/DanShu93/martialarts-tracker && go get ./... && go run /go/src/github.com/DanShu93/martialarts-tracker/cmd/server/server.go"
     ports:
       - 8888:80
   martialarts-tracker-db:
