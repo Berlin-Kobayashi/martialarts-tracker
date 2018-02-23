@@ -32,9 +32,15 @@ func (s TrainingUnitService) get(rw http.ResponseWriter, r *http.Request) {
 
 	trainingUnit, err := s.Repository.Read(string(trainingSeriesName), string(trainingUnitIndex))
 	if err != nil {
-		// TODO respond with propper status code e.g. 400, 404 or 500
 		fmt.Println(err)
-		rw.WriteHeader(http.StatusBadRequest)
+		switch err {
+		case NotFound:
+			rw.WriteHeader(http.StatusNotFound)
+		case Invalid:
+			rw.WriteHeader(http.StatusInternalServerError)
+		default:
+			rw.WriteHeader(http.StatusInternalServerError)
+		}
 	}
 
 	trainingUnitJSON, err := json.Marshal(trainingUnit)

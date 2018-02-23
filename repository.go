@@ -6,7 +6,11 @@ import (
 	"os"
 	"strconv"
 	"regexp"
+	"errors"
 )
+
+var NotFound = errors.New("training unit could not be found")
+var Invalid = errors.New("training unit is invalid")
 
 type TrainingUnitRepository interface {
 	Save(trainingUnit TrainingUnit) (string, error)
@@ -83,13 +87,13 @@ func (r FileTrainingUnitRepository) Read(trainingSeriesName, trainingUnitIndex s
 
 	contents, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		return TrainingUnit{}, err
+		return TrainingUnit{}, NotFound
 	}
 
 	trainingUnit := TrainingUnit{}
 	err = json.Unmarshal(contents, &trainingUnit)
 	if err != nil {
-		return TrainingUnit{}, err
+		return TrainingUnit{}, Invalid
 	}
 
 	return trainingUnit, nil
