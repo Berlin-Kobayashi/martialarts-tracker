@@ -1,4 +1,4 @@
-package martialarts
+package service
 
 import (
 	"net/http"
@@ -6,10 +6,12 @@ import (
 	"io/ioutil"
 	"regexp"
 	"fmt"
+	"github.com/DanShu93/martialarts-tracker/repository"
+	"github.com/DanShu93/martialarts-tracker/entity"
 )
 
 type TrainingUnitService struct {
-	Repository TrainingUnitRepository
+	Repository repository.TrainingUnitRepository
 }
 
 func (s TrainingUnitService) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
@@ -34,9 +36,9 @@ func (s TrainingUnitService) get(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println(err)
 		switch err {
-		case NotFound:
+		case repository.NotFound:
 			rw.WriteHeader(http.StatusNotFound)
-		case Invalid:
+		case repository.Invalid:
 			rw.WriteHeader(http.StatusInternalServerError)
 		default:
 			rw.WriteHeader(http.StatusInternalServerError)
@@ -59,7 +61,7 @@ func (s TrainingUnitService) post(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(http.StatusInternalServerError)
 	}
 
-	trainingUnit := TrainingUnit{}
+	trainingUnit := entity.TrainingUnit{}
 	err = json.Unmarshal(content, &trainingUnit)
 	if err != nil {
 		fmt.Println(err)

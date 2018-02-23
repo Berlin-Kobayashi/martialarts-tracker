@@ -1,4 +1,4 @@
-package martialarts
+package repository
 
 import (
 	"encoding/json"
@@ -6,22 +6,14 @@ import (
 	"os"
 	"strconv"
 	"regexp"
-	"errors"
+	"github.com/DanShu93/martialarts-tracker/entity"
 )
-
-var NotFound = errors.New("training unit could not be found")
-var Invalid = errors.New("training unit is invalid")
-
-type TrainingUnitRepository interface {
-	Save(trainingUnit TrainingUnit) (string, error)
-	Read(trainingSeriesName, trainingUnitIndex string) (TrainingUnit, error)
-}
 
 type FileTrainingUnitRepository struct {
 	DataPath string
 }
 
-func (r FileTrainingUnitRepository) Save(trainingUnit TrainingUnit) (string, error) {
+func (r FileTrainingUnitRepository) Save(trainingUnit entity.TrainingUnit) (string, error) {
 	series := trainingUnit.Series
 	jsonString, err := json.Marshal(trainingUnit)
 	if err != nil {
@@ -82,18 +74,18 @@ func getCurrentLessonIndex(seriesDirectoryName string) (string, error) {
 	return strconv.Itoa(maxIndex), nil
 }
 
-func (r FileTrainingUnitRepository) Read(trainingSeriesName, trainingUnitIndex string) (TrainingUnit, error) {
+func (r FileTrainingUnitRepository) Read(trainingSeriesName, trainingUnitIndex string) (entity.TrainingUnit, error) {
 	filePath := r.getFilePath(trainingSeriesName, trainingUnitIndex)
 
 	contents, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		return TrainingUnit{}, NotFound
+		return entity.TrainingUnit{}, NotFound
 	}
 
-	trainingUnit := TrainingUnit{}
+	trainingUnit := entity.TrainingUnit{}
 	err = json.Unmarshal(contents, &trainingUnit)
 	if err != nil {
-		return TrainingUnit{}, Invalid
+		return entity.TrainingUnit{}, Invalid
 	}
 
 	return trainingUnit, nil

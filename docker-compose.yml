@@ -8,3 +8,7 @@ services:
     command: go run /go/src/github.com/DanShu93/martialarts-tracker/cmd/server/server.go
     ports:
       - 8888:80
+  martialarts-tracker-db:
+    image: mongo:3.6
+    ports:
+      - 27017:27017

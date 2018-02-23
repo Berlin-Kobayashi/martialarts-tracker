@@ -1,4 +1,4 @@
-package martialarts
+package entity
 
 type TrainingUnit struct {
 	Series     string
