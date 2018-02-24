@@ -6,6 +6,7 @@ var RecordedTrainingUnit entity.TrainingUnit
 
 var TrainingUnitFixture = entity.TrainingUnit{
 	Series: "JKD I",
+	ID:     "b5e57615-0f40-404e-bbe0-6ae81fe8080a",
 	Techniques: []string{
 		"bc5ac88f-3d3f-4a1a-83b2-92f847eb6ae6",
 	},

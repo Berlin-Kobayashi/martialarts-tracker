@@ -8,10 +8,13 @@ import (
 	"reflect"
 	"github.com/DanShu93/martialarts-tracker/repository"
 	"encoding/json"
+	"github.com/DanShu93/martialarts-tracker/uuid"
 )
 
 func TestTrainingUnitService_ServeHTTPGET(t *testing.T) {
-	trainingUnitService := TrainingUnitService{repository.DummyTrainingUnitRepository{}}
+	repo := repository.DummyTrainingUnitRepository{}
+	uuidGenerator := uuid.Dummy{}
+	trainingUnitService := TrainingUnitService{repo, uuidGenerator}
 
 	req := httptest.NewRequest("GET", "/", nil)
 	w := httptest.NewRecorder()
@@ -31,7 +34,8 @@ func TestTrainingUnitService_ServeHTTPGET(t *testing.T) {
 
 func TestTrainingUnitService_ServeHTTPPOST(t *testing.T) {
 	repo := repository.DummyTrainingUnitRepository{}
-	trainingUnitService := TrainingUnitService{repo}
+	uuidGenerator := uuid.Dummy{}
+	trainingUnitService := TrainingUnitService{repo, uuidGenerator}
 
 	req := httptest.NewRequest("POST", "/", bytes.NewReader([]byte(getTrainingUnitFixtureJSON(t))))
 	w := httptest.NewRecorder()

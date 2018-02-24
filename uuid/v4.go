@@ -5,7 +5,10 @@ import (
 	"fmt"
 )
 
-func V4() string {
+type V4 struct {
+}
+
+func (g V4) Generate() string {
 	b := make([]byte, 16)
 	rand.Read(b)
 

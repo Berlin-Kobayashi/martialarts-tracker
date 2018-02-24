@@ -12,7 +12,8 @@ import (
 )
 
 type TrainingUnitService struct {
-	Repository repository.TrainingUnitRepository
+	Repository    repository.TrainingUnitRepository
+	UUIDGenerator uuid.Generator
 }
 
 func (s TrainingUnitService) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
@@ -73,7 +74,7 @@ func (s TrainingUnitService) post(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	trainingUnit.ID = uuid.V4()
+	trainingUnit.ID = s.UUIDGenerator.Generate()
 
 	err = s.Repository.Save(trainingUnit)
 	if err != nil {
