@@ -8,6 +8,7 @@ type TrainingUnit struct {
 	Exercises  []string
 }
 
+// TODO add time
 type Technique struct {
 	ID          string `bson:"_id"`
 	Kind        string
