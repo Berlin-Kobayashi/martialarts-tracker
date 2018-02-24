@@ -4,41 +4,26 @@ import "github.com/DanShu93/martialarts-tracker/entity"
 
 var RecordedTrainingUnit entity.TrainingUnit
 
-var pakSaoFixture = entity.Technique{
-	Kind:        "counter",
-	Name:        "pak sao",
-	Description: "Means slapping hand\nCounter a jab by slapping the elbow of the opponent into his body, destroying his structure\nAt the same time perform a jab",
-}
-
 var TrainingUnitFixture = entity.TrainingUnit{
 	Series: "JKD I",
-	Techniques: []entity.Technique{
-		pakSaoFixture,
+	Techniques: []string{
+		"bc5ac88f-3d3f-4a1a-83b2-92f847eb6ae6",
 	},
-	Methods: []entity.Method{
-		{
-			Kind:        "counter",
-			Name:        "Pak Sao drill",
-			Description: "",
-			Covers:      []entity.Technique{pakSaoFixture},
-		},
+	Methods: []string{
+		"2969227d-6eb4-4cdd-96f5-7ca6c97d4df8",
 	},
-	Exercises: []entity.Exercise{
-		{
-			Kind:        "Sparring",
-			Name:        "Lead hand sparring",
-			Description: "Sparing with lead hand punches only",
-		},
+	Exercises: []string{
+		"4da2ab63-d83d-4b14-8cf0-e0d8eb815ce8",
 	},
 }
 
 type DummyTrainingUnitRepository struct {
 }
 
-func (s DummyTrainingUnitRepository) Save(trainingUnit entity.TrainingUnit) (string, error) {
+func (s DummyTrainingUnitRepository) Save(trainingUnit entity.TrainingUnit) error {
 	RecordedTrainingUnit = trainingUnit
 
-	return "1", nil
+	return nil
 }
 
 func (s DummyTrainingUnitRepository) Read(trainingUnitIndex string) (entity.TrainingUnit, error) {

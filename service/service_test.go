@@ -7,9 +7,8 @@ import (
 	"bytes"
 	"reflect"
 	"github.com/DanShu93/martialarts-tracker/repository"
+	"encoding/json"
 )
-
-var trainingUnitJSONFixture = "{\"Series\":\"JKD I\",\"Techniques\":[{\"Kind\":\"counter\",\"Name\":\"pak sao\",\"Description\":\"Means slapping hand\\nCounter a jab by slapping the elbow of the opponent into his body, destroying his structure\\nAt the same time perform a jab\"}],\"Methods\":[{\"Kind\":\"counter\",\"Name\":\"Pak Sao drill\",\"Description\":\"\",\"Covers\":[{\"Kind\":\"counter\",\"Name\":\"pak sao\",\"Description\":\"Means slapping hand\\nCounter a jab by slapping the elbow of the opponent into his body, destroying his structure\\nAt the same time perform a jab\"}]}],\"Exercises\":[{\"Kind\":\"Sparring\",\"Name\":\"Lead hand sparring\",\"Description\":\"Sparing with lead hand punches only\"}]}"
 
 func TestTrainingUnitService_ServeHTTPGET(t *testing.T) {
 	trainingUnitService := TrainingUnitService{repository.DummyTrainingUnitRepository{}}
@@ -18,7 +17,7 @@ func TestTrainingUnitService_ServeHTTPGET(t *testing.T) {
 	w := httptest.NewRecorder()
 	trainingUnitService.ServeHTTP(w, req)
 
-	expectedBody := trainingUnitJSONFixture
+	expectedBody := getTrainingUnitFixtureJSON(t)
 
 	content, err := ioutil.ReadAll(w.Result().Body)
 	if err != nil {
@@ -34,11 +33,21 @@ func TestTrainingUnitService_ServeHTTPPOST(t *testing.T) {
 	repo := repository.DummyTrainingUnitRepository{}
 	trainingUnitService := TrainingUnitService{repo}
 
-	req := httptest.NewRequest("POST", "/", bytes.NewReader([]byte(trainingUnitJSONFixture)))
+	req := httptest.NewRequest("POST", "/", bytes.NewReader([]byte(getTrainingUnitFixtureJSON(t))))
 	w := httptest.NewRecorder()
 	trainingUnitService.ServeHTTP(w, req)
 
 	if !reflect.DeepEqual(repository.RecordedTrainingUnit, repository.TrainingUnitFixture) {
 		t.Errorf("TrainingUnitService POST does not save expected data Actual %v Expected %v", repository.RecordedTrainingUnit, repository.TrainingUnitFixture)
 	}
+}
+
+func getTrainingUnitFixtureJSON(t *testing.T) string {
+	fixtureJSON, err := json.Marshal(repository.TrainingUnitFixture)
+
+	if err != nil {
+		t.Errorf("Could not create training unit fixture")
+	}
+
+	return string(fixtureJSON)
 }

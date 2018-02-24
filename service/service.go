@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/DanShu93/martialarts-tracker/repository"
 	"github.com/DanShu93/martialarts-tracker/entity"
+	"github.com/DanShu93/martialarts-tracker/uuid"
 )
 
 type TrainingUnitService struct {
@@ -72,7 +73,9 @@ func (s TrainingUnitService) post(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	index, err := s.Repository.Save(trainingUnit)
+	trainingUnit.ID = uuid.V4()
+
+	err = s.Repository.Save(trainingUnit)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusInternalServerError)
@@ -80,5 +83,5 @@ func (s TrainingUnitService) post(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rw.Write([]byte(index))
+	rw.Write([]byte(trainingUnit.ID))
 }

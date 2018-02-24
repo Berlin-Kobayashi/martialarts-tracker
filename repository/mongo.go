@@ -24,19 +24,15 @@ func NewMongoRepository(url, db, trainingUnitCollection string) (MongoTrainingUn
 	return MongoTrainingUnitRepository{collection}, nil
 }
 
-func (s MongoTrainingUnitRepository) Save(trainingUnit entity.TrainingUnit) (string, error) {
+func (s MongoTrainingUnitRepository) Save(trainingUnit entity.TrainingUnit) error {
 	RecordedTrainingUnit = trainingUnit
 
-	t := &trainingUnit
-
-	info, err := s.trainingUnitCollection.Upsert(bson.M{"a": "a"}, t)
+	err := s.trainingUnitCollection.Insert(trainingUnit)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	id := info.UpsertedId.(bson.ObjectId)
-
-	return id.Hex(), nil
+	return nil
 }
 
 func (s MongoTrainingUnitRepository) Read(trainingUnitIndex string) (entity.TrainingUnit, error) {
