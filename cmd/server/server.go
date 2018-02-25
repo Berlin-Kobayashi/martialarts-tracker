@@ -9,12 +9,41 @@ import (
 )
 
 func main() {
+	mongoURL := "martialarts-tracker-db:27017"
+	mongoDB := "martialarts"
+
 	trainingUnitRepository, err := storage.NewMongoRepository(
-		"martialarts-tracker-db:27017",
-		"martialarts",
+		mongoURL,
+		mongoDB,
 		"training_units",
 	)
+	if err != nil {
+		panic(err)
+	}
 
+	techniqueRepository, err := storage.NewMongoRepository(
+		mongoURL,
+		mongoDB,
+		"techniques",
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	methodRepository, err := storage.NewMongoRepository(
+		mongoURL,
+		mongoDB,
+		"methods",
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	exerciseRepository, err := storage.NewMongoRepository(
+		mongoURL,
+		mongoDB,
+		"exercises",
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -23,6 +52,18 @@ func main() {
 		"training-unit": {
 			Entity:     &entity.TrainingUnit{},
 			Repository: trainingUnitRepository,
+		},
+		"technique": {
+			Entity:     &entity.Technique{},
+			Repository: techniqueRepository,
+		},
+		"method": {
+			Entity:     &entity.Method{},
+			Repository: methodRepository,
+		},
+		"exercise": {
+			Entity:     &entity.Exercise{},
+			Repository: exerciseRepository,
 		},
 	}
 

@@ -45,7 +45,8 @@ func (s StorageService) get(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = entityDefinition.Repository.Read(index, &entityDefinition.Entity)
+	entity := entityDefinition.Entity
+	err = entityDefinition.Repository.Read(index, entity)
 
 	if err != nil {
 		fmt.Println(err)
@@ -61,7 +62,7 @@ func (s StorageService) get(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := json.Marshal(entityDefinition.Entity)
+	response, err := json.Marshal(entity)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusInternalServerError)
