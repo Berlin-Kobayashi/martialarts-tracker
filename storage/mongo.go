@@ -33,10 +33,7 @@ func (s MongoRepository) Save(data interface{}) error {
 }
 
 func (s MongoRepository) Read(id string, result interface{}) error {
-	if !bson.IsObjectIdHex(id) {
-		return NotFound
-	}
-	query := s.collection.Find(bson.M{"_id": bson.ObjectIdHex(id)})
+	query := s.collection.Find(bson.M{"_id": id})
 
 	n, err := query.Count()
 	if err != nil {
@@ -47,7 +44,7 @@ func (s MongoRepository) Read(id string, result interface{}) error {
 		return NotFound
 	}
 
-	err = query.One(&result)
+	err = query.One(result)
 	if err != nil {
 		return Invalid
 	}
