@@ -19,5 +19,4 @@ See examples directory
 
 
 ## TODOs
- - add time to training unit
- - add service to add a complete training unit including new techniques etc
+ - add logging service to add a complete training unit including new techniques etc

@@ -1,9 +1,14 @@
 package service
 
-import "github.com/DanShu93/martialarts-tracker/entity"
+import (
+	"github.com/DanShu93/martialarts-tracker/entity"
+	"time"
+)
 
 var trainingUnitFixture = entity.TrainingUnit{
 	Series: "Coding",
+	Start:  time.Date(2018, 2, 25, 17, 0, 0, 0, time.UTC),
+	End:    time.Date(2018, 2, 25, 17, 0, 0, 0, time.UTC),
 	ID:     "b5e57615-0f40-404e-bbe0-6ae81fe8080a",
 	Techniques: []string{
 		"bc5ac88f-3d3f-4a1a-83b2-92f847eb6ae6",

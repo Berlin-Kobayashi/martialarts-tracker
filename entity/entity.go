@@ -1,7 +1,11 @@
 package entity
 
+import "time"
+
 type TrainingUnit struct {
 	ID         string `bson:"_id"`
+	Start      time.Time
+	End        time.Time
 	Series     string
 	Techniques []string
 	Methods    []string
