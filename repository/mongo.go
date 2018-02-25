@@ -25,8 +25,6 @@ func NewMongoRepository(url, db, trainingUnitCollection string) (MongoTrainingUn
 }
 
 func (s MongoTrainingUnitRepository) Save(trainingUnit entity.TrainingUnit) error {
-	RecordedTrainingUnit = trainingUnit
-
 	err := s.trainingUnitCollection.Insert(trainingUnit)
 	if err != nil {
 		return err
