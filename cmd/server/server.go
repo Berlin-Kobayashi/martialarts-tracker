@@ -5,10 +5,11 @@ import (
 	"github.com/DanShu93/martialarts-tracker/storage"
 	"github.com/DanShu93/martialarts-tracker/service"
 	"github.com/DanShu93/martialarts-tracker/uuid"
+	"github.com/DanShu93/martialarts-tracker/entity"
 )
 
 func main() {
-	repo, err := storage.NewMongoRepository(
+	trainingUnitRepository, err := storage.NewMongoRepository(
 		"martialarts-tracker-db:27017",
 		"martialarts",
 		"training_units",
@@ -18,12 +19,21 @@ func main() {
 		panic(err)
 	}
 
+	entityDefinitions := service.EntityDefinitions{
+		"training-unit": {
+			Entity:     &entity.TrainingUnit{},
+			Repository: trainingUnitRepository,
+		},
+	}
+
 	uuidGenerator := uuid.V4{}
 
-	trainingUnitService := service.TrainingUnitService{Repository: repo, UUIDGenerator: uuidGenerator}
+	trackingService := service.StorageService{
+		EntityDefinitions: entityDefinitions,
+		UUIDGenerator:     uuidGenerator,
+	}
 
-	http.Handle("/training-unit/", trainingUnitService)
-	http.Handle("/training-unit", trainingUnitService)
+	http.Handle("/", trackingService)
 
 	http.ListenAndServe(":80", nil)
 }
