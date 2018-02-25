@@ -6,14 +6,12 @@ import (
 	"io/ioutil"
 	"bytes"
 	"reflect"
-	"github.com/DanShu93/martialarts-tracker/repository"
 	"encoding/json"
-	"github.com/DanShu93/martialarts-tracker/uuid"
 )
 
 func TestTrainingUnitService_ServeHTTPGET(t *testing.T) {
-	repo := repository.DummyTrainingUnitRepository{}
-	uuidGenerator := uuid.Dummy{}
+	repo := dummyRepository{}
+	uuidGenerator := dummyUUIDGenerator{}
 	trainingUnitService := TrainingUnitService{repo, uuidGenerator}
 
 	req := httptest.NewRequest("GET", "/", nil)
@@ -33,21 +31,21 @@ func TestTrainingUnitService_ServeHTTPGET(t *testing.T) {
 }
 
 func TestTrainingUnitService_ServeHTTPPOST(t *testing.T) {
-	repo := repository.DummyTrainingUnitRepository{}
-	uuidGenerator := uuid.Dummy{}
+	repo := dummyRepository{}
+	uuidGenerator := dummyUUIDGenerator{}
 	trainingUnitService := TrainingUnitService{repo, uuidGenerator}
 
 	req := httptest.NewRequest("POST", "/", bytes.NewReader([]byte(getTrainingUnitFixtureJSON(t))))
 	w := httptest.NewRecorder()
 	trainingUnitService.ServeHTTP(w, req)
 
-	if !reflect.DeepEqual(repository.RecordedTrainingUnit, repository.TrainingUnitFixture) {
-		t.Errorf("TrainingUnitService POST does not save expected data Actual %v Expected %v", repository.RecordedTrainingUnit, repository.TrainingUnitFixture)
+	if !reflect.DeepEqual(recordedData, trainingUnitFixture) {
+		t.Errorf("TrainingUnitService POST does not save expected data Actual %v Expected %v", recordedData, trainingUnitFixture)
 	}
 }
 
 func getTrainingUnitFixtureJSON(t *testing.T) string {
-	fixtureJSON, err := json.Marshal(repository.TrainingUnitFixture)
+	fixtureJSON, err := json.Marshal(trainingUnitFixture)
 
 	if err != nil {
 		t.Errorf("Could not create training unit fixture")

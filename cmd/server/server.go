@@ -2,13 +2,13 @@ package main
 
 import (
 	"net/http"
-	"github.com/DanShu93/martialarts-tracker/repository"
+	"github.com/DanShu93/martialarts-tracker/storage"
 	"github.com/DanShu93/martialarts-tracker/service"
 	"github.com/DanShu93/martialarts-tracker/uuid"
 )
 
 func main() {
-	repo, err := repository.NewMongoRepository(
+	repo, err := storage.NewMongoRepository(
 		"martialarts-tracker-db:27017",
 		"martialarts",
 		"training_units",

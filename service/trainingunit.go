@@ -6,14 +6,13 @@ import (
 	"io/ioutil"
 	"regexp"
 	"fmt"
-	"github.com/DanShu93/martialarts-tracker/repository"
+	"github.com/DanShu93/martialarts-tracker/storage"
 	"github.com/DanShu93/martialarts-tracker/entity"
-	"github.com/DanShu93/martialarts-tracker/uuid"
 )
 
 type TrainingUnitService struct {
-	Repository    repository.TrainingUnitRepository
-	UUIDGenerator uuid.Generator
+	Repository    Repository
+	UUIDGenerator UUIDGenerator
 }
 
 func (s TrainingUnitService) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
@@ -32,13 +31,15 @@ func (s TrainingUnitService) get(rw http.ResponseWriter, r *http.Request) {
 
 	trainingUnitIndex := trainingUnitRegex.ReplaceAll([]byte(r.URL.Path), []byte("$1"))
 
-	trainingUnit, err := s.Repository.Read(string(trainingUnitIndex))
+	trainingUnit := entity.TrainingUnit{}
+	err := s.Repository.Read(string(trainingUnitIndex), &trainingUnit)
+
 	if err != nil {
 		fmt.Println(err)
 		switch err {
-		case repository.NotFound:
+		case storage.NotFound:
 			rw.WriteHeader(http.StatusNotFound)
-		case repository.Invalid:
+		case storage.Invalid:
 			rw.WriteHeader(http.StatusInternalServerError)
 		default:
 			rw.WriteHeader(http.StatusInternalServerError)
