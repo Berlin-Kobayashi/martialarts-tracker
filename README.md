@@ -19,6 +19,5 @@ See examples directory
 
 
 ## TODOs
- - cover current code by unit tests and use TDD from now on
  - add time to training unit
  - add service to add a complete training unit including new techniques etc
