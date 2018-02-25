@@ -17,6 +17,8 @@ See examples directory
 
 
 ## TODOs
- - cleanup project structure (do not have everything in main package)
  - cover current code by unit tests and use TDD from now on
- - remove favicon service
+ - add time to training unit
+ - add technique
+ - add exercise
+ - add method
