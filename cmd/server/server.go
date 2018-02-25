@@ -74,6 +74,7 @@ func main() {
 		UUIDGenerator:     uuidGenerator,
 	}
 
+	http.Handle("/training-unit/log", service.LogService{})
 	http.Handle("/", trackingService)
 
 	http.ListenAndServe(":80", nil)

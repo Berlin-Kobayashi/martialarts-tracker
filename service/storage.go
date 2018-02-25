@@ -28,6 +28,8 @@ func (s StorageService) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		s.get(rw, r)
 	case http.MethodPost:
 		s.post(rw, r)
+	default:
+		rw.WriteHeader(http.StatusMethodNotAllowed)
 	}
 }
 
