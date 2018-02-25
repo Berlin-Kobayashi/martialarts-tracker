@@ -1,0 +1,8 @@
+{
+  "Kind": "Project",
+  "Name": "martialarts-tracker",
+  "Description": "Tracking service for martial arts training.",
+  "Covers": [
+    "b5e57615-0f40-404e-bbe0-6ae81fe8080a"
+  ]
+}

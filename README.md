@@ -1,5 +1,7 @@
 # martialarts-tracker
 
+Tracking service for martial arts training.
+
 ## Setup
 
 ### Immutable Image
