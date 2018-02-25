@@ -20,3 +20,4 @@ See examples directory
 
 ## TODOs
  - add logging service to add a complete training unit including new techniques etc
+ - make CRUD complete
