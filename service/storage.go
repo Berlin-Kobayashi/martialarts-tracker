@@ -127,6 +127,10 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
 func (s StorageService) detectEntityDefinition(r *http.Request) (EntityDefinition, error) {
 	entityNameRegex := regexp.MustCompile("^/(.*)/[^/]+$")
 
+	if !entityNameRegex.Match([]byte(r.URL.Path)) {
+		entityNameRegex = regexp.MustCompile("^/(.*)$")
+	}
+
 	entityName := string(entityNameRegex.ReplaceAll([]byte(r.URL.Path), []byte("$1")))
 
 	entityType, ok := s.EntityDefinitions[entityName]
