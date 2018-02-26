@@ -5,17 +5,17 @@ import (
 	"github.com/DanShu93/martialarts-tracker/entity"
 )
 
-type Log struct {
+type ExpandedTrainingUnit struct {
 	ID         string `bson:"_id"`
 	Start      time.Time
 	End        time.Time
 	Series     string
 	Techniques []entity.Technique
-	Methods    []LogMethod
+	Methods    []ExpandedMethod
 	Exercises  []entity.Exercise
 }
 
-type LogMethod struct {
+type ExpandedMethod struct {
 	ID          string `bson:"_id"`
 	Kind        string
 	Name        string
@@ -23,20 +23,20 @@ type LogMethod struct {
 	Covers      []entity.Technique
 }
 
-type LogRepository struct {
+type ExpandingRepository struct {
 	TrainingUnitRepository Repository
 	TechniqueRepository    Repository
 	MethodRepository       Repository
 	ExerciseRepository     Repository
 }
 
-func (s LogRepository) Save(data interface{}) error {
+func (s ExpandingRepository) Save(data interface{}) error {
 	return UnsupportedMethod
 }
 
-func (s LogRepository) Read(id string, result interface{}) error {
+func (s ExpandingRepository) Read(id string, result interface{}) error {
 	switch resultPtr := result.(type) {
-	case *Log:
+	case *ExpandedTrainingUnit:
 		trainingUnit := entity.TrainingUnit{}
 		err := s.TrainingUnitRepository.Read(id, &trainingUnit)
 		if err != nil {
@@ -72,7 +72,7 @@ func (s LogRepository) Read(id string, result interface{}) error {
 			resultPtr.Exercises[i] = exercise
 		}
 
-		resultPtr.Methods = make([]LogMethod, len(trainingUnit.Methods))
+		resultPtr.Methods = make([]ExpandedMethod, len(trainingUnit.Methods))
 
 		for i, methodID := range trainingUnit.Methods {
 			method := entity.Method{}
@@ -81,12 +81,12 @@ func (s LogRepository) Read(id string, result interface{}) error {
 				return err
 			}
 
-			logMethod := LogMethod{}
-			logMethod.ID = method.ID
-			logMethod.Kind = method.Kind
-			logMethod.Name = method.Name
-			logMethod.Description = method.Description
-			logMethod.Covers = make([]entity.Technique, len(method.Covers))
+			expandedMethod := ExpandedMethod{}
+			expandedMethod.ID = method.ID
+			expandedMethod.Kind = method.Kind
+			expandedMethod.Name = method.Name
+			expandedMethod.Description = method.Description
+			expandedMethod.Covers = make([]entity.Technique, len(method.Covers))
 
 			for i, techniqueID := range method.Covers {
 				technique := entity.Technique{}
@@ -95,10 +95,10 @@ func (s LogRepository) Read(id string, result interface{}) error {
 					return err
 				}
 
-				logMethod.Covers[i] = technique
+				expandedMethod.Covers[i] = technique
 			}
 
-			resultPtr.Methods[i] = logMethod
+			resultPtr.Methods[i] = expandedMethod
 		}
 
 	default:

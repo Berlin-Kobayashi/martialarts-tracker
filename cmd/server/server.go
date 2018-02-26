@@ -90,9 +90,9 @@ func build(mongoURL, mongoDB string) (service.StorageService, error) {
 				Generator:  uuidGenerator,
 			},
 		},
-		"training-unit/log": {
-			Entity: &service.Log{},
-			Repository: service.LogRepository{
+		"training-unit/expand": {
+			Entity: &service.ExpandedTrainingUnit{},
+			Repository: service.ExpandingRepository{
 				TrainingUnitRepository: trainingUnitRepository,
 				TechniqueRepository:    techniqueRepository,
 				ExerciseRepository:     exerciseRepository,
