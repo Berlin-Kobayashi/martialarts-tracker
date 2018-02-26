@@ -34,7 +34,7 @@ func (s StorageService) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 func (s StorageService) get(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Add("Content-Type", "application/json")
 
-	indexRegex := regexp.MustCompile("^/[^/]+/([^/]+)$")
+	indexRegex := regexp.MustCompile("^.*/([^/]+)$")
 	index := string(indexRegex.ReplaceAll([]byte(r.URL.Path), []byte("$1")))
 
 	entityDefinition, err := s.detectEntityDefinition(r)
@@ -120,7 +120,7 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (s StorageService) detectEntityDefinition(r *http.Request) (EntityDefinition, error) {
-	entityNameRegex := regexp.MustCompile("^/([^/]+).*")
+	entityNameRegex := regexp.MustCompile("^/(.*)/[^/]+$")
 
 	entityName := string(entityNameRegex.ReplaceAll([]byte(r.URL.Path), []byte("$1")))
 
