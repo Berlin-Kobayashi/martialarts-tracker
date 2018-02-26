@@ -15,7 +15,6 @@ import (
 var entityName = "training-unit"
 
 var storageService = StorageService{
-	UUIDGenerator: dummyUUIDGenerator{},
 	EntityDefinitions: EntityDefinitions{
 		entityName: {
 			Entity:     &entity.TrainingUnit{},
@@ -48,6 +47,17 @@ func TestStorageService_ServeHTTPPOST(t *testing.T) {
 
 	if !reflect.DeepEqual(recordedData, &trainingUnitFixture) {
 		t.Errorf("Does not save expected data. Actual %v Expected %v", recordedData, trainingUnitFixture)
+	}
+
+	expectedBody := getTrainingUnitFixtureJSON(t)
+
+	content, err := ioutil.ReadAll(w.Result().Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if string(content) != expectedBody {
+		t.Errorf("Does not produce expected response. Actual %q Expected %q", content, expectedBody)
 	}
 }
 

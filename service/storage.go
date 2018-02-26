@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"regexp"
 	"github.com/DanShu93/martialarts-tracker/storage"
-	"reflect"
 )
 
 type EntityDefinitions map[string]EntityDefinition
@@ -18,7 +17,6 @@ type EntityDefinition struct {
 }
 
 type StorageService struct {
-	UUIDGenerator     UUIDGenerator
 	EntityDefinitions EntityDefinitions
 }
 
@@ -76,6 +74,8 @@ func (s StorageService) get(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
+	rw.Header().Add("Content-Type", "application/json")
+
 	content, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		fmt.Println(err)
@@ -91,7 +91,7 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	entity := entityDefinition.Entity
-	err = json.Unmarshal(content, &entity)
+	err = json.Unmarshal(content, entity)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusBadRequest)
@@ -99,12 +99,8 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id := s.UUIDGenerator.Generate()
-	reflect.ValueOf(entityDefinition.Entity).Elem().FieldByName("ID").SetString(id)
-
-	fmt.Println(entityDefinition.Entity)
-
-	err = entityDefinition.Repository.Save(entityDefinition.Entity)
+	entity = entityDefinition.Entity
+	err = entityDefinition.Repository.Save(entity)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusInternalServerError)
@@ -112,7 +108,15 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rw.Write([]byte(id))
+	response, err := json.Marshal(entity)
+	if err != nil {
+		fmt.Println(err)
+		rw.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
+
+	rw.Write(response)
 }
 
 func (s StorageService) detectEntityDefinition(r *http.Request) (EntityDefinition, error) {

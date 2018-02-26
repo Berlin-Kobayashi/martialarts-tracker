@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+var uuidV4Fixture = "b5e57615-0f40-404e-bbe0-6ae81fe8080a"
+
 var trainingUnitFixture = entity.TrainingUnit{
 	Series: "Coding",
 	Start:  time.Date(2018, 2, 25, 17, 0, 0, 0, time.UTC),

@@ -12,13 +12,25 @@ func main() {
 	mongoURL := "martialarts-tracker-db:27017"
 	mongoDB := "martialarts"
 
+	storageService, err := build(mongoURL, mongoDB)
+	if err != nil {
+		panic(err)
+	}
+
+	http.Handle("/training-unit/log", service.LogService{})
+	http.Handle("/", storageService)
+
+	http.ListenAndServe(":80", nil)
+}
+
+func build(mongoURL, mongoDB string) (service.StorageService, error) {
 	trainingUnitRepository, err := storage.NewMongoRepository(
 		mongoURL,
 		mongoDB,
 		"training_units",
 	)
 	if err != nil {
-		panic(err)
+		return service.StorageService{}, err
 	}
 
 	techniqueRepository, err := storage.NewMongoRepository(
@@ -27,7 +39,7 @@ func main() {
 		"techniques",
 	)
 	if err != nil {
-		panic(err)
+		return service.StorageService{}, err
 	}
 
 	methodRepository, err := storage.NewMongoRepository(
@@ -36,7 +48,7 @@ func main() {
 		"methods",
 	)
 	if err != nil {
-		panic(err)
+		return service.StorageService{}, err
 	}
 
 	exerciseRepository, err := storage.NewMongoRepository(
@@ -45,37 +57,43 @@ func main() {
 		"exercises",
 	)
 	if err != nil {
-		panic(err)
-	}
-
-	entityDefinitions := service.EntityDefinitions{
-		"training-unit": {
-			Entity:     &entity.TrainingUnit{},
-			Repository: trainingUnitRepository,
-		},
-		"technique": {
-			Entity:     &entity.Technique{},
-			Repository: techniqueRepository,
-		},
-		"method": {
-			Entity:     &entity.Method{},
-			Repository: methodRepository,
-		},
-		"exercise": {
-			Entity:     &entity.Exercise{},
-			Repository: exerciseRepository,
-		},
+		return service.StorageService{}, err
 	}
 
 	uuidGenerator := uuid.V4{}
 
-	trackingService := service.StorageService{
-		EntityDefinitions: entityDefinitions,
-		UUIDGenerator:     uuidGenerator,
+	entityDefinitions := service.EntityDefinitions{
+		"training-unit": {
+			Entity: &entity.TrainingUnit{},
+			Repository: service.IndexingRepository{
+				Repository: trainingUnitRepository,
+				Generator:  uuidGenerator,
+			},
+		},
+		"technique": {
+			Entity: &entity.Technique{},
+			Repository: service.IndexingRepository{
+				Repository: techniqueRepository,
+				Generator:  uuidGenerator,
+			},
+		},
+		"method": {
+			Entity: &entity.Method{},
+			Repository: service.IndexingRepository{
+				Repository: methodRepository,
+				Generator:  uuidGenerator,
+			},
+		},
+		"exercise": {
+			Entity: &entity.Exercise{},
+			Repository: service.IndexingRepository{
+				Repository: exerciseRepository,
+				Generator:  uuidGenerator,
+			},
+		},
 	}
 
-	http.Handle("/training-unit/log", service.LogService{})
-	http.Handle("/", trackingService)
-
-	http.ListenAndServe(":80", nil)
+	return service.StorageService{
+		EntityDefinitions: entityDefinitions,
+	}, nil
 }
