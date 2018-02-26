@@ -2,5 +2,5 @@ package service
 
 import "errors"
 
-var NotSupportedMethod = errors.New("method is not supported")
-var NotSupportedEntity = errors.New("entity is not supported")
+var UnsupportedMethod = errors.New("method is not supported")
+var UnsupportedEntity = errors.New("entity is not supported")

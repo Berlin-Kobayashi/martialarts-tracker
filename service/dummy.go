@@ -27,7 +27,7 @@ func (s dummyRepository) Read(id string, result interface{}) error {
 	case *entity.TrainingUnit:
 		*resultPtr = trainingUnitFixture
 	default:
-		return NotSupportedEntity
+		return UnsupportedEntity
 	}
 
 	return nil

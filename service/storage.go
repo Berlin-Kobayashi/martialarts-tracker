@@ -103,7 +103,12 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
 	err = entityDefinition.Repository.Save(entity)
 	if err != nil {
 		fmt.Println(err)
-		rw.WriteHeader(http.StatusInternalServerError)
+		switch err {
+		case UnsupportedMethod:
+			rw.WriteHeader(http.StatusMethodNotAllowed)
+		default:
+			rw.WriteHeader(http.StatusInternalServerError)
+		}
 
 		return
 	}

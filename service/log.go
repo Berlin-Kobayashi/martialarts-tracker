@@ -31,7 +31,7 @@ type LogRepository struct {
 }
 
 func (s LogRepository) Save(data interface{}) error {
-	return NotSupportedMethod
+	return UnsupportedMethod
 }
 
 func (s LogRepository) Read(id string, result interface{}) error {
@@ -102,7 +102,7 @@ func (s LogRepository) Read(id string, result interface{}) error {
 		}
 
 	default:
-		return NotSupportedEntity
+		return UnsupportedEntity
 	}
 
 	return nil
