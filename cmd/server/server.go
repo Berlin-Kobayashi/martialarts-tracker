@@ -91,8 +91,13 @@ func build(mongoURL, mongoDB string) (service.StorageService, error) {
 			},
 		},
 		"log": {
-			Entity:     &service.Log{},
-			Repository: service.LogRepository{},
+			Entity: &service.Log{},
+			Repository: service.LogRepository{
+				TrainingUnitRepository: trainingUnitRepository,
+				TechniqueRepository:    techniqueRepository,
+				ExerciseRepository:     exerciseRepository,
+				MethodRepository:       methodRepository,
+			},
 		},
 	}
 

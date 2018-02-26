@@ -26,6 +26,8 @@ func (s dummyRepository) Read(id string, result interface{}) error {
 	switch resultPtr := result.(type) {
 	case *entity.TrainingUnit:
 		*resultPtr = trainingUnitFixture
+	default:
+		return NotSupportedEntity
 	}
 
 	return nil
