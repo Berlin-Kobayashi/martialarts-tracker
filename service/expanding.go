@@ -23,18 +23,18 @@ type ExpandedMethod struct {
 	Covers      []entity.Technique
 }
 
-type ExpandingRepository struct {
-	TrainingUnitRepository Repository
-	TechniqueRepository    Repository
-	MethodRepository       Repository
-	ExerciseRepository     Repository
+type ExpandedTrainingUnitRepository struct {
+	TrainingUnitRepository   Repository
+	TechniqueRepository      Repository
+	ExpandedMethodRepository Repository
+	ExerciseRepository       Repository
 }
 
-func (s ExpandingRepository) Save(data interface{}) error {
+func (s ExpandedTrainingUnitRepository) Save(data interface{}) error {
 	return UnsupportedMethod
 }
 
-func (s ExpandingRepository) Read(id string, result interface{}) error {
+func (s ExpandedTrainingUnitRepository) Read(id string, result interface{}) error {
 	switch resultPtr := result.(type) {
 	case *ExpandedTrainingUnit:
 		trainingUnit := entity.TrainingUnit{}
@@ -75,30 +75,54 @@ func (s ExpandingRepository) Read(id string, result interface{}) error {
 		resultPtr.Methods = make([]ExpandedMethod, len(trainingUnit.Methods))
 
 		for i, methodID := range trainingUnit.Methods {
-			method := entity.Method{}
-			err := s.MethodRepository.Read(methodID, &method)
+			expandedMethod := ExpandedMethod{}
+			err := s.ExpandedMethodRepository.Read(methodID, &expandedMethod)
 			if err != nil {
 				return err
 			}
 
-			expandedMethod := ExpandedMethod{}
-			expandedMethod.ID = method.ID
-			expandedMethod.Kind = method.Kind
-			expandedMethod.Name = method.Name
-			expandedMethod.Description = method.Description
-			expandedMethod.Covers = make([]entity.Technique, len(method.Covers))
+			resultPtr.Methods[i] = expandedMethod
+		}
 
-			for i, techniqueID := range method.Covers {
-				technique := entity.Technique{}
-				err := s.TechniqueRepository.Read(techniqueID, &technique)
-				if err != nil {
-					return err
-				}
+	default:
+		return UnsupportedEntity
+	}
 
-				expandedMethod.Covers[i] = technique
+	return nil
+}
+
+type ExpandedMethodRepository struct {
+	TechniqueRepository Repository
+	MethodRepository    Repository
+}
+
+func (s ExpandedMethodRepository) Save(data interface{}) error {
+	return UnsupportedMethod
+}
+
+func (s ExpandedMethodRepository) Read(id string, result interface{}) error {
+	switch resultPtr := result.(type) {
+	case *ExpandedMethod:
+		method := entity.Method{}
+		err := s.MethodRepository.Read(id, &method)
+		if err != nil {
+			return err
+		}
+
+		resultPtr.ID = method.ID
+		resultPtr.Kind = method.Kind
+		resultPtr.Name = method.Name
+		resultPtr.Description = method.Description
+		resultPtr.Covers = make([]entity.Technique, len(method.Covers))
+
+		for i, techniqueID := range method.Covers {
+			technique := entity.Technique{}
+			err := s.TechniqueRepository.Read(techniqueID, &technique)
+			if err != nil {
+				return err
 			}
 
-			resultPtr.Methods[i] = expandedMethod
+			resultPtr.Covers[i] = technique
 		}
 
 	default:

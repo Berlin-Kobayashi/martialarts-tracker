@@ -59,6 +59,18 @@ func build(mongoURL, mongoDB string) (service.StorageService, error) {
 		return service.StorageService{}, err
 	}
 
+	expandedMethodRepository := service.ExpandedMethodRepository{
+		TechniqueRepository: techniqueRepository,
+		MethodRepository:    methodRepository,
+	}
+
+	expandedTrainingUnitRepository := service.ExpandedTrainingUnitRepository{
+		TrainingUnitRepository:   trainingUnitRepository,
+		TechniqueRepository:      techniqueRepository,
+		ExerciseRepository:       exerciseRepository,
+		ExpandedMethodRepository: expandedMethodRepository,
+	}
+
 	uuidGenerator := uuid.V4{}
 
 	entityDefinitions := service.EntityDefinitions{
@@ -91,13 +103,12 @@ func build(mongoURL, mongoDB string) (service.StorageService, error) {
 			},
 		},
 		"training-unit/expand": {
-			Entity: &service.ExpandedTrainingUnit{},
-			Repository: service.ExpandingRepository{
-				TrainingUnitRepository: trainingUnitRepository,
-				TechniqueRepository:    techniqueRepository,
-				ExerciseRepository:     exerciseRepository,
-				MethodRepository:       methodRepository,
-			},
+			Entity:     &service.ExpandedTrainingUnit{},
+			Repository: expandedTrainingUnitRepository,
+		},
+		"method/expand": {
+			Entity:     &service.ExpandedMethod{},
+			Repository: expandedMethodRepository,
 		},
 	}
 
