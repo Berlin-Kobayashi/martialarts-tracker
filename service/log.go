@@ -1,22 +1,27 @@
 package service
 
 import (
-	"net/http"
+	"time"
+	"github.com/DanShu93/martialarts-tracker/entity"
 )
 
-type LogService struct {
+type Log struct {
+	ID         string `bson:"_id"`
+	Start      time.Time
+	End        time.Time
+	Series     string
+	Techniques []entity.Technique
+	Methods    []entity.Method
+	Exercises  []entity.Exercise
 }
 
-func (s LogService) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodPost:
-		s.post(rw, r)
-	default:
-		rw.WriteHeader(http.StatusMethodNotAllowed)
-	}
+type LogRepository struct {
 }
 
-//TODO implement
-func (s LogService) post(rw http.ResponseWriter, r *http.Request) {
-	rw.Write([]byte("logged"))
+func (s LogRepository) Save(data interface{}) error {
+	return nil
+}
+
+func (s LogRepository) Read(id string, result interface{}) error {
+	return nil
 }

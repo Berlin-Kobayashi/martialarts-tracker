@@ -17,7 +17,6 @@ func main() {
 		panic(err)
 	}
 
-	http.Handle("/training-unit/log", service.LogService{})
 	http.Handle("/", storageService)
 
 	http.ListenAndServe(":80", nil)
@@ -90,6 +89,10 @@ func build(mongoURL, mongoDB string) (service.StorageService, error) {
 				Repository: exerciseRepository,
 				Generator:  uuidGenerator,
 			},
+		},
+		"log": {
+			Entity:     &service.Log{},
+			Repository: service.LogRepository{},
 		},
 	}
 
