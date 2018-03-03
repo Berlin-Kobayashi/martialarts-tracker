@@ -1,31 +1,15 @@
 {
-  "Series": "JKD I",
+  "ID": "b5e57615-0f40-404e-bbe0-6ae81fe8080a",
+  "Start": "2018-02-25T17:00:00+00:00",
+  "End": "2018-02-25T18:00:00+00:00",
+  "Series": "Coding",
   "Techniques": [
-    {
-      "Kind": "counter",
-      "Name": "pak sao",
-      "Description": "Means slapping hand\nCounter a jab by slapping the elbow of the opponent into his body, destroying his structure\nAt the same time perform a jab"
-    }
+    "bc5ac88f-3d3f-4a1a-83b2-92f847eb6ae6"
   ],
   "Methods": [
-    {
-      "Kind": "counter",
-      "Name": "Pak Sao drill",
-      "Description": "",
-      "Covers": [
-        {
-          "Kind": "counter",
-          "Name": "pak sao",
-          "Description": "Means slapping hand\nCounter a jab by slapping the elbow of the opponent into his body, destroying his structure\nAt the same time perform a jab"
-        }
-      ]
-    }
+    "2969227d-6eb4-4cdd-96f5-7ca6c97d4df8"
   ],
   "Exercises": [
-    {
-      "Kind": "Sparring",
-      "Name": "Lead hand sparring",
-      "Description": "Sparing with lead hand punches only"
-    }
+    "4da2ab63-d83d-4b14-8cf0-e0d8eb815ce8"
   ]
 }

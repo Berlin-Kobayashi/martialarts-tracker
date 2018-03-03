@@ -2,23 +2,117 @@ package main
 
 import (
 	"net/http"
-	"github.com/DanShu93/martialarts-tracker/repository"
+	"github.com/DanShu93/martialarts-tracker/storage"
 	"github.com/DanShu93/martialarts-tracker/service"
+	"github.com/DanShu93/martialarts-tracker/uuid"
+	"github.com/DanShu93/martialarts-tracker/entity"
 )
 
 func main() {
-	repo, err := repository.NewMongoRepository(
-		"martialarts-tracker-db:27017",
-		"martialarts",
-		"training_units",
-	)
+	mongoURL := "martialarts-tracker-db:27017"
+	mongoDB := "martialarts"
 
+	storageService, err := build(mongoURL, mongoDB)
 	if err != nil {
 		panic(err)
 	}
 
-	http.Handle("/training-unit/", service.TrainingUnitService{Repository: repo})
-	http.Handle("/training-unit", service.TrainingUnitService{Repository: repo})
+	http.Handle("/", storageService)
 
 	http.ListenAndServe(":80", nil)
+}
+
+func build(mongoURL, mongoDB string) (service.StorageService, error) {
+	trainingUnitRepository, err := storage.NewMongoRepository(
+		mongoURL,
+		mongoDB,
+		"training_units",
+	)
+	if err != nil {
+		return service.StorageService{}, err
+	}
+
+	techniqueRepository, err := storage.NewMongoRepository(
+		mongoURL,
+		mongoDB,
+		"techniques",
+	)
+	if err != nil {
+		return service.StorageService{}, err
+	}
+
+	methodRepository, err := storage.NewMongoRepository(
+		mongoURL,
+		mongoDB,
+		"methods",
+	)
+	if err != nil {
+		return service.StorageService{}, err
+	}
+
+	exerciseRepository, err := storage.NewMongoRepository(
+		mongoURL,
+		mongoDB,
+		"exercises",
+	)
+	if err != nil {
+		return service.StorageService{}, err
+	}
+
+	expandedMethodRepository := service.ExpandedMethodRepository{
+		TechniqueRepository: techniqueRepository,
+		MethodRepository:    methodRepository,
+	}
+
+	expandedTrainingUnitRepository := service.ExpandedTrainingUnitRepository{
+		TrainingUnitRepository:   trainingUnitRepository,
+		TechniqueRepository:      techniqueRepository,
+		ExerciseRepository:       exerciseRepository,
+		ExpandedMethodRepository: expandedMethodRepository,
+	}
+
+	uuidGenerator := uuid.V4{}
+
+	entityDefinitions := service.EntityDefinitions{
+		"training-unit": {
+			Entity: &entity.TrainingUnit{},
+			Repository: service.IndexingRepository{
+				Repository: trainingUnitRepository,
+				Generator:  uuidGenerator,
+			},
+		},
+		"technique": {
+			Entity: &entity.Technique{},
+			Repository: service.IndexingRepository{
+				Repository: techniqueRepository,
+				Generator:  uuidGenerator,
+			},
+		},
+		"method": {
+			Entity: &entity.Method{},
+			Repository: service.IndexingRepository{
+				Repository: methodRepository,
+				Generator:  uuidGenerator,
+			},
+		},
+		"exercise": {
+			Entity: &entity.Exercise{},
+			Repository: service.IndexingRepository{
+				Repository: exerciseRepository,
+				Generator:  uuidGenerator,
+			},
+		},
+		"training-unit/expand": {
+			Entity:     &service.ExpandedTrainingUnit{},
+			Repository: expandedTrainingUnitRepository,
+		},
+		"method/expand": {
+			Entity:     &service.ExpandedMethod{},
+			Repository: expandedMethodRepository,
+		},
+	}
+
+	return service.StorageService{
+		EntityDefinitions: entityDefinitions,
+	}, nil
 }

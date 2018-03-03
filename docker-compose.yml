@@ -2,7 +2,8 @@ version: "3.3"
 
 services:
   martialarts-tracker-app:
-    image: golang:1.9
+    image: golang:1.10
+    working_dir: /go/src/github.com/DanShu93/martialarts-tracker
     volumes:
       - ./../../../:/go/src/
     command: bash -c "cd /go/src/github.com/DanShu93/martialarts-tracker && go get ./... && go run /go/src/github.com/DanShu93/martialarts-tracker/cmd/server/server.go"

@@ -1,5 +1,7 @@
 # martialarts-tracker
 
+Tracking service for martial arts training.
+
 ## Setup
 
 ### Immutable Image
@@ -17,6 +19,5 @@ See examples directory
 
 
 ## TODOs
- - cleanup project structure (do not have everything in main package)
- - cover current code by unit tests and use TDD from now on
- - remove favicon service
+ - make CRUD complete
+ - read all
