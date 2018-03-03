@@ -7,9 +7,9 @@ type TrainingUnit struct {
 	Start      time.Time
 	End        time.Time
 	Series     string
-	Techniques []string
-	Methods    []string
-	Exercises  []string
+	Techniques []Technique
+	Methods    []Method
+	Exercises  []Exercise
 }
 
 type Technique struct {
@@ -24,7 +24,7 @@ type Method struct {
 	Kind        string
 	Name        string
 	Description string
-	Covers      []string
+	Covers      []Technique
 }
 
 type Exercise struct {

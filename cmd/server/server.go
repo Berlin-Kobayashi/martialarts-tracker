@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"github.com/DanShu93/martialarts-tracker/storage"
 	"github.com/DanShu93/martialarts-tracker/service"
-	"github.com/DanShu93/martialarts-tracker/uuid"
 	"github.com/DanShu93/martialarts-tracker/entity"
+	"reflect"
 )
 
 func main() {
@@ -59,56 +59,22 @@ func build(mongoURL, mongoDB string) (service.StorageService, error) {
 		return service.StorageService{}, err
 	}
 
-	expandedMethodRepository := service.ExpandedMethodRepository{
-		TechniqueRepository: techniqueRepository,
-		MethodRepository:    methodRepository,
-	}
-
-	expandedTrainingUnitRepository := service.ExpandedTrainingUnitRepository{
-		TrainingUnitRepository:   trainingUnitRepository,
-		TechniqueRepository:      techniqueRepository,
-		ExerciseRepository:       exerciseRepository,
-		ExpandedMethodRepository: expandedMethodRepository,
-	}
-
-	uuidGenerator := uuid.V4{}
-
 	entityDefinitions := service.EntityDefinitions{
 		"training-unit": {
-			Entity: &entity.TrainingUnit{},
-			Repository: service.IndexingRepository{
-				Repository: trainingUnitRepository,
-				Generator:  uuidGenerator,
-			},
+			T: reflect.TypeOf(entity.TrainingUnit{}),
+			R: trainingUnitRepository,
 		},
 		"technique": {
-			Entity: &entity.Technique{},
-			Repository: service.IndexingRepository{
-				Repository: techniqueRepository,
-				Generator:  uuidGenerator,
-			},
+			T: reflect.TypeOf(entity.Technique{}),
+			R: techniqueRepository,
 		},
 		"method": {
-			Entity: &entity.Method{},
-			Repository: service.IndexingRepository{
-				Repository: methodRepository,
-				Generator:  uuidGenerator,
-			},
+			T: reflect.TypeOf(entity.Method{}),
+			R: methodRepository,
 		},
 		"exercise": {
-			Entity: &entity.Exercise{},
-			Repository: service.IndexingRepository{
-				Repository: exerciseRepository,
-				Generator:  uuidGenerator,
-			},
-		},
-		"training-unit/expand": {
-			Entity:     &service.ExpandedTrainingUnit{},
-			Repository: expandedTrainingUnitRepository,
-		},
-		"method/expand": {
-			Entity:     &service.ExpandedMethod{},
-			Repository: expandedMethodRepository,
+			T: reflect.TypeOf(entity.Exercise{}),
+			R: exerciseRepository,
 		},
 	}
 

@@ -17,8 +17,8 @@ var entityName = "training-unit"
 var storageService = StorageService{
 	EntityDefinitions: EntityDefinitions{
 		entityName: {
-			Entity:     &entity.TrainingUnit{},
-			Repository: dummyRepository{},
+			T: reflect.TypeOf(entity.TrainingUnit{}),
+			R: dummyRepository{},
 		},
 	},
 }

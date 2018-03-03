@@ -6,15 +6,17 @@ import (
 	"fmt"
 	"encoding/json"
 	"regexp"
-	"github.com/DanShu93/martialarts-tracker/storage"
+	"reflect"
 )
 
 type EntityDefinitions map[string]EntityDefinition
 
 type EntityDefinition struct {
-	Entity     interface{}
-	Repository Repository
+	R Repository
+	T reflect.Type
 }
+
+type typeMap map[reflect.Type]Repository
 
 type StorageService struct {
 	EntityDefinitions EntityDefinitions
@@ -32,45 +34,6 @@ func (s StorageService) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (s StorageService) get(rw http.ResponseWriter, r *http.Request) {
-	rw.Header().Add("Content-Type", "application/json")
-
-	indexRegex := regexp.MustCompile("^.*/([^/]+)$")
-	index := string(indexRegex.ReplaceAll([]byte(r.URL.Path), []byte("$1")))
-
-	entityDefinition, err := s.detectEntityDefinition(r)
-	if err != nil {
-		fmt.Println(err)
-		rw.WriteHeader(http.StatusNotFound)
-
-		return
-	}
-
-	entity := entityDefinition.Entity
-	err = entityDefinition.Repository.Read(index, entity)
-
-	if err != nil {
-		fmt.Println(err)
-		switch err {
-		case storage.NotFound:
-			rw.WriteHeader(http.StatusNotFound)
-		case storage.Invalid:
-			rw.WriteHeader(http.StatusInternalServerError)
-		default:
-			rw.WriteHeader(http.StatusInternalServerError)
-		}
-
-		return
-	}
-
-	response, err := json.Marshal(entity)
-	if err != nil {
-		fmt.Println(err)
-		rw.WriteHeader(http.StatusInternalServerError)
-
-		return
-	}
-
-	rw.Write(response)
 }
 
 func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
@@ -90,7 +53,14 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	entity := entityDefinition.Entity
+	entity, err := GetReferencingEntity(entityDefinition.T)
+	if err != nil {
+		fmt.Println(err)
+		rw.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
+
 	err = json.Unmarshal(content, entity)
 	if err != nil {
 		fmt.Println(err)
@@ -99,8 +69,7 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	entity = entityDefinition.Entity
-	err = entityDefinition.Repository.Save(entity)
+	err = entityDefinition.R.Save(entity)
 	if err != nil {
 		fmt.Println(err)
 		switch err {
