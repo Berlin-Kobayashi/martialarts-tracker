@@ -8,7 +8,6 @@ const idFieldName = "ID"
 
 type entityStorage map[reflect.Type]Repository
 
-// TODO add custom struct tags to overwrite property name
 func GetReference(t reflect.Type) (interface{}, error) {
 	switch t.Kind() {
 	case reflect.Struct:
@@ -67,45 +66,53 @@ func GetReference(t reflect.Type) (interface{}, error) {
 	return reflect.New(t).Interface(), nil
 }
 
-func (e entityStorage) AssertExistingResource(entity interface{}) error {
-	return e.assertExistingResourceRecursively(entity, true)
+func (e entityStorage) AssertExistingResource(entity interface{}, t reflect.Type) error {
+	return e.assertExistingResourceRecursively(entity, t, true)
 }
 
-func (e entityStorage) AssertExistingReferences(entity interface{}) error {
-	return e.assertExistingResourceRecursively(entity, false)
+func (e entityStorage) AssertExistingReferences(entity interface{}, t reflect.Type) error {
+	return e.assertExistingResourceRecursively(entity, t, false)
 }
 
-func (e entityStorage) assertExistingResourceRecursively(entity interface{}, checkRoot bool) error {
+func (e entityStorage) assertExistingResourceRecursively(entity interface{}, t reflect.Type, checkRoot bool) error {
 	v := reflect.ValueOf(entity)
-
-	switch v.Type().Kind() {
+	switch t.Kind() {
 	case reflect.Struct:
-		if idField, hasID := v.Type().FieldByName(idFieldName); checkRoot && hasID && idField.Type.Kind() == reflect.String {
-			id := v.FieldByName(idFieldName).String()
-			propertyValue := reflect.New(v.Type()).Interface()
-			if err := e[v.Type()].Read(id, &propertyValue); err != nil {
+		if idField, hasID := t.FieldByName(idFieldName); checkRoot && hasID && idField.Type.Kind() == reflect.String {
+			id := ""
+			if v.Kind() == reflect.String {
+				id = v.Interface().(string)
+			} else {
+				id = v.MapIndex(reflect.ValueOf(idFieldName)).Interface().(string)
+			}
+
+			propertyValue := reflect.New(t).Interface()
+			if err := e[t].Read(id, &propertyValue); err != nil {
 				return err
 			}
 		}
-		for i := 0; i < v.NumField(); i++ {
-			err := e.assertExistingResourceRecursively(v.Field(i).Interface(), true)
-			if err != nil {
-				return err
+
+		if v.Kind() != reflect.String {
+			for i := 0; i < t.NumField(); i++ {
+				fieldValue := v.MapIndex(reflect.ValueOf(t.Field(i).Name))
+				err := e.assertExistingResourceRecursively(fieldValue.Interface(), t.Field(i).Type, true)
+				if err != nil {
+					return err
+				}
 			}
 		}
 
 		return nil
-
 	case reflect.Map:
 		for _, k := range v.MapKeys() {
-			err := e.assertExistingResourceRecursively(v.MapIndex(k).Interface(), true)
+			err := e.assertExistingResourceRecursively(v.MapIndex(k).Interface(), t.Elem(), true)
 			if err != nil {
 				return err
 			}
 		}
 	case reflect.Slice:
 		for i := 0; i < v.Len(); i++ {
-			err := e.assertExistingResourceRecursively(v.Index(i).Interface(), true)
+			err := e.assertExistingResourceRecursively(v.Index(i).Interface(), t.Elem(), true)
 			if err != nil {
 				return err
 			}

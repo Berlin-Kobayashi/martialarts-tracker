@@ -12,8 +12,9 @@ var indexedDataStorage = entityStorage{
 }
 
 func TestEntityStorage_AssertExistingResource(t *testing.T) {
-	input := indexedDataFixture
-	err := indexedDataStorage.AssertExistingResource(input)
+	input := createReferenceFixture()
+
+	err := indexedDataStorage.AssertExistingResource(input, reflect.TypeOf(indexedData{}))
 
 	if err != nil {
 		t.Fatalf("Unexpected error %s", err)
@@ -21,12 +22,9 @@ func TestEntityStorage_AssertExistingResource(t *testing.T) {
 }
 
 func TestEntityStorage_AssertExistingResourceForMissingReference(t *testing.T) {
-	input := indexedDataFixture
-
-	mappedData := deeplyNestedIndexedDataFixture
-	mappedData.ID = "123"
-	input.MappedIndexedData = map[string]deeplyNestedIndexedData{mapIndexFixture: mappedData}
-	err := indexedDataStorage.AssertExistingResource(input)
+	input := createReferenceFixture()
+	input["MappedIndexedData"] = map[string]string{mapIndexFixture: "123"}
+	err := indexedDataStorage.AssertExistingResource(input, reflect.TypeOf(indexedData{}))
 
 	if err == nil {
 		t.Error("Expected error")
@@ -34,9 +32,9 @@ func TestEntityStorage_AssertExistingResourceForMissingReference(t *testing.T) {
 }
 
 func TestEntityStorage_AssertExistingReferencesForMissingResource(t *testing.T) {
-	input := indexedDataFixture
-	input.ID = "123"
-	err := indexedDataStorage.AssertExistingReferences(input)
+	input := createReferenceFixture()
+	input["ID"] = "123"
+	err := indexedDataStorage.AssertExistingReferences(input, reflect.TypeOf(indexedData{}))
 
 	if err != nil {
 		t.Errorf("Unexpected error %q", err)
@@ -67,5 +65,20 @@ func TestGetReference(t *testing.T) {
 
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("Unexpected result\n\n Actual: %+v\n\n Expected: %+v", actual, expected)
+	}
+}
+
+func createReferenceFixture() map[string]interface{} {
+	return map[string]interface{}{
+		"ID":   idFixture,
+		"Data": dataValueFixture,
+		"NestedData": map[string]interface{}{
+			"Data":                    nestedDataValueFixture,
+			"DeeplyNestedIndexedData": deeplyNestedIDFixture,
+		},
+		"NestedIndexedData": nestedIDFixture,
+		"MappedIndexedData": map[string]string{mapIndexFixture:deeplyNestedIDFixture},
+		"SlicedIndexedData": []string{deeplyNestedIDFixture},
+		"MappedData":        map[string]string{mapIndexFixture: dataValueFixture},
 	}
 }
