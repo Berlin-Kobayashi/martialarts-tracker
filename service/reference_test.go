@@ -56,6 +56,7 @@ func TestGetReference(t *testing.T) {
 		"NestedIndexedData": reflect.New(reflect.TypeOf("")).Interface(),
 		"MappedIndexedData": reflect.New(reflect.TypeOf(map[string]string{})).Interface(),
 		"SlicedIndexedData": reflect.New(reflect.TypeOf([]string{})).Interface(),
+		"MappedData":        reflect.New(reflect.MapOf(reflect.TypeOf(""), reflect.TypeOf(reflect.New(reflect.TypeOf("")).Interface()))).Interface(),
 	}
 
 	actual, err := GetReference(input)

@@ -44,7 +44,12 @@ func GetReference(t reflect.Type) (interface{}, error) {
 				return GetReference(property)
 			}
 		} else {
-			return GetReference(property)
+			referencingEntity, err := GetReference(property)
+			if err != nil {
+				return nil, err
+			}
+
+			return reflect.New(reflect.MapOf(t.Key(), reflect.TypeOf(referencingEntity))).Interface(), nil
 		}
 	case reflect.Slice:
 		property := t.Elem()
