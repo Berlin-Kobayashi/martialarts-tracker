@@ -11,15 +11,30 @@ import (
 
 type EntityDefinitions map[string]EntityDefinition
 
+func (e EntityDefinitions) createEntityStorage() entityStorage {
+	entityStorage := make(entityStorage, len(e))
+	for _, v := range e {
+		entityStorage[v.T] = v.R
+	}
+
+	return entityStorage
+}
+
 type EntityDefinition struct {
 	R Repository
 	T reflect.Type
 }
 
-type typeMap map[reflect.Type]Repository
-
 type StorageService struct {
-	EntityDefinitions EntityDefinitions
+	entityDefinitions EntityDefinitions
+	entityStorage     entityStorage
+}
+
+func NewStorageService(entityDefinitions EntityDefinitions) StorageService {
+	return StorageService{
+		entityDefinitions: entityDefinitions,
+		entityStorage:     entityDefinitions.createEntityStorage(),
+	}
 }
 
 func (s StorageService) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
@@ -53,7 +68,7 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	entity, err := GetReferencingEntity(entityDefinition.T)
+	reference, err := GetReference(entityDefinition.T)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusInternalServerError)
@@ -61,7 +76,7 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = json.Unmarshal(content, entity)
+	err = json.Unmarshal(content, &reference)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusBadRequest)
@@ -69,7 +84,15 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = entityDefinition.R.Save(entity)
+	_, err = s.entityStorage.GetValidReference(reference)
+	if err != nil {
+		fmt.Println(err)
+		rw.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
+
+	err = entityDefinition.R.Save(reference)
 	if err != nil {
 		fmt.Println(err)
 		switch err {
@@ -82,7 +105,7 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := json.Marshal(entity)
+	response, err := json.Marshal(reference)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusInternalServerError)
@@ -102,7 +125,7 @@ func (s StorageService) detectEntityDefinition(r *http.Request) (EntityDefinitio
 
 	entityName := string(entityNameRegex.ReplaceAll([]byte(r.URL.Path), []byte("$1")))
 
-	entityType, ok := s.EntityDefinitions[entityName]
+	entityType, ok := s.entityDefinitions[entityName]
 	if !ok {
 		return EntityDefinition{}, fmt.Errorf("entity %s is not defined", entityName)
 	}

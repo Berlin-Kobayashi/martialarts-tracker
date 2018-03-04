@@ -3,7 +3,7 @@ package entity
 import "time"
 
 type TrainingUnit struct {
-	ID         string `bson:"_id"`
+	ID         string
 	Start      time.Time
 	End        time.Time
 	Series     string
@@ -13,14 +13,14 @@ type TrainingUnit struct {
 }
 
 type Technique struct {
-	ID          string `bson:"_id"`
+	ID          string
 	Kind        string
 	Name        string
 	Description string
 }
 
 type Method struct {
-	ID          string `bson:"_id"`
+	ID          string
 	Kind        string
 	Name        string
 	Description string
@@ -28,7 +28,7 @@ type Method struct {
 }
 
 type Exercise struct {
-	ID          string `bson:"_id"`
+	ID          string
 	Kind        string
 	Name        string
 	Description string

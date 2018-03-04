@@ -78,7 +78,5 @@ func build(mongoURL, mongoDB string) (service.StorageService, error) {
 		},
 	}
 
-	return service.StorageService{
-		EntityDefinitions: entityDefinitions,
-	}, nil
+	return service.NewStorageService(entityDefinitions), nil
 }
