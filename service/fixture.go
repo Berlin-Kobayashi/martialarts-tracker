@@ -5,6 +5,8 @@ type indexedData struct {
 	Data              string
 	NestedData        nestedData
 	NestedIndexedData nestedIndexedData
+	MappedIndexedData map[string]deeplyNestedIndexedData
+	SlicedIndexedData []deeplyNestedIndexedData
 }
 
 type nestedData struct {
@@ -28,6 +30,10 @@ var indexedDataFixture = indexedData{
 	Data:              dataValueFixture,
 	NestedData:        nestedDataFixture,
 	NestedIndexedData: nestedIndexedDataFixture,
+	MappedIndexedData: map[string]deeplyNestedIndexedData{
+		mapIndexFixture: deeplyNestedIndexedDataFixture,
+	},
+	SlicedIndexedData: []deeplyNestedIndexedData{deeplyNestedIndexedDataFixture},
 }
 
 var nestedDataFixture = nestedData{
@@ -53,5 +59,7 @@ var deeplyNestedIDFixture = "deeplyNestedID"
 var dataValueFixture = "myData"
 var nestedDataValueFixture = "myNestedData"
 var nestedIndexedDataFixtureValue = "myNestedIndexedData"
+
+var mapIndexFixture = "myMapID"
 
 var uuidV4Fixture = "b5e57615-0f40-404e-bbe0-6ae81fe8080a"

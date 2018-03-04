@@ -11,32 +11,35 @@ var indexedDataStorage = entityStorage{
 	reflect.TypeOf(deeplyNestedIndexedData{}): dummyRepository{},
 }
 
-func TestEntityStorage_AssertValidReference(t *testing.T) {
+func TestEntityStorage_AssertExistingResource(t *testing.T) {
 	input := indexedDataFixture
-	err := indexedDataStorage.AssertValidReference(input)
+	err := indexedDataStorage.AssertExistingResource(input)
 
 	if err != nil {
 		t.Fatalf("Unexpected error %s", err)
 	}
 }
 
-func TestEntityStorage_AssertValidReferenceForUnsupportedType(t *testing.T) {
-	input := 1
+func TestEntityStorage_AssertExistingResourceForMissingReference(t *testing.T) {
+	input := indexedDataFixture
 
-	err := indexedDataStorage.AssertValidReference(input)
+	mappedData := deeplyNestedIndexedDataFixture
+	mappedData.ID = "123"
+	input.MappedIndexedData = map[string]deeplyNestedIndexedData{mapIndexFixture: mappedData}
+	err := indexedDataStorage.AssertExistingResource(input)
 
 	if err == nil {
 		t.Error("Expected error")
 	}
 }
 
-func TestEntityStorage_AssertValidReferenceForMissingResource(t *testing.T) {
+func TestEntityStorage_AssertExistingReferencesForMissingResource(t *testing.T) {
 	input := indexedDataFixture
-	input.NestedIndexedData.ID = "123"
-	err := indexedDataStorage.AssertValidReference(input)
+	input.ID = "123"
+	err := indexedDataStorage.AssertExistingReferences(input)
 
-	if err == nil {
-		t.Error("Expected error")
+	if err != nil {
+		t.Errorf("Unexpected error %q", err)
 	}
 }
 
@@ -51,6 +54,8 @@ func TestGetReference(t *testing.T) {
 			"DeeplyNestedIndexedData": reflect.New(reflect.TypeOf("")).Interface(),
 		},
 		"NestedIndexedData": reflect.New(reflect.TypeOf("")).Interface(),
+		"MappedIndexedData": reflect.New(reflect.TypeOf(map[string]string{})).Interface(),
+		"SlicedIndexedData": reflect.New(reflect.TypeOf([]string{})).Interface(),
 	}
 
 	actual, err := GetReference(input)
@@ -60,16 +65,6 @@ func TestGetReference(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(actual, expected) {
-		t.Errorf("Unexpected result %+v", actual)
-	}
-}
-
-func TestGetReferenceForUnsupportedType(t *testing.T) {
-	input := 1
-
-	_, err := GetReference(reflect.TypeOf(input))
-
-	if err == nil {
-		t.Error("Expected error")
+		t.Errorf("Unexpected result\n\n Actual: %+v\n\n Expected: %+v", actual, expected)
 	}
 }

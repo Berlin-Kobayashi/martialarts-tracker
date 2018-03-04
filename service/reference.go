@@ -2,7 +2,6 @@ package service
 
 import (
 	"reflect"
-	"errors"
 )
 
 const idFieldName = "ID"
@@ -27,41 +26,86 @@ func GetReference(t reflect.Type) (interface{}, error) {
 					result[property.Name] = referencingEntity
 				}
 			} else {
-				result[property.Name] = reflect.New(property.Type).Interface()
+				referencingEntity, err := GetReference(property.Type)
+				if err != nil {
+					return nil, err
+				}
+				result[property.Name] = referencingEntity
 			}
 		}
 
 		return result, nil
+	case reflect.Map:
+		property := t.Elem()
+		if property.Kind() == reflect.Struct {
+			if idField, hasID := property.FieldByName(idFieldName); hasID && idField.Type.Kind() == reflect.String {
+				return reflect.New(reflect.TypeOf(map[string]string{})).Interface(), nil
+			} else {
+				return GetReference(property)
+			}
+		} else {
+			return GetReference(property)
+		}
+	case reflect.Slice:
+		property := t.Elem()
+		if property.Kind() == reflect.Struct {
+			if idField, hasID := property.FieldByName(idFieldName); hasID && idField.Type.Kind() == reflect.String {
+				return reflect.New(reflect.TypeOf([]string{})).Interface(), nil
+			} else {
+				return GetReference(property)
+			}
+		} else {
+			return GetReference(property)
+		}
 	}
 
-	return nil, errors.New("could not get reference for ")
+	return reflect.New(t).Interface(), nil
 }
 
-func (e entityStorage) AssertValidReference(entity interface{}) error {
+func (e entityStorage) AssertExistingResource(entity interface{}) error {
+	return e.assertExistingResourceRecursively(entity, true)
+}
+
+func (e entityStorage) AssertExistingReferences(entity interface{}) error {
+	return e.assertExistingResourceRecursively(entity, false)
+}
+
+func (e entityStorage) assertExistingResourceRecursively(entity interface{}, checkRoot bool) error {
 	v := reflect.ValueOf(entity)
 
 	switch v.Type().Kind() {
 	case reflect.Struct:
+		if idField, hasID := v.Type().FieldByName(idFieldName); checkRoot && hasID && idField.Type.Kind() == reflect.String {
+			id := v.FieldByName(idFieldName).String()
+			propertyValue := reflect.New(v.Type()).Interface()
+			if err := e[v.Type()].Read(id, &propertyValue); err != nil {
+				return err
+			}
+		}
 		for i := 0; i < v.NumField(); i++ {
-			property := v.Field(i)
-			if property.Kind() == reflect.Struct {
-				if idField, hasID := property.Type().FieldByName(idFieldName); hasID && idField.Type.Kind() == reflect.String {
-					id := property.FieldByName(idFieldName).String()
-					propertyValue := reflect.New(property.Type()).Interface()
-					if err := e[property.Type()].Read(id, &propertyValue); err != nil {
-						return err
-					}
-				} else {
-					err := e.AssertValidReference(property.Interface())
-					if err != nil {
-						return err
-					}
-				}
+			err := e.assertExistingResourceRecursively(v.Field(i).Interface(), true)
+			if err != nil {
+				return err
 			}
 		}
 
 		return nil
+
+	case reflect.Map:
+		for _, k := range v.MapKeys() {
+			err := e.assertExistingResourceRecursively(v.MapIndex(k).Interface(), true)
+			if err != nil {
+				return err
+			}
+		}
+	case reflect.Slice:
+		for i := 0; i < v.Len(); i++ {
+			err := e.assertExistingResourceRecursively(v.Index(i).Interface(), true)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
-	return errors.New("could not get reference for unsupported type")
+	return nil
 }
