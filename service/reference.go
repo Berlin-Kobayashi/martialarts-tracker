@@ -34,7 +34,7 @@ func GetReference(t reflect.Type) (interface{}, error) {
 		return result, nil
 	}
 
-	return nil, errors.New("could not get reference for non struct entity")
+	return nil, errors.New("could not get reference for ")
 }
 
 func (e entityStorage) AssertValidReference(entity interface{}) error {
@@ -51,7 +51,6 @@ func (e entityStorage) AssertValidReference(entity interface{}) error {
 					if err := e[property.Type()].Read(id, &propertyValue); err != nil {
 						return err
 					}
-
 				} else {
 					err := e.AssertValidReference(property.Interface())
 					if err != nil {
@@ -64,5 +63,5 @@ func (e entityStorage) AssertValidReference(entity interface{}) error {
 		return nil
 	}
 
-	return errors.New("could not get reference for non struct entity")
+	return errors.New("could not get reference for unsupported type")
 }
