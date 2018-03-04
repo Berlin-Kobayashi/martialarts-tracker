@@ -84,7 +84,7 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = s.entityStorage.GetValidReference(reference)
+	err = s.entityStorage.AssertValidReference(reference)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusInternalServerError)

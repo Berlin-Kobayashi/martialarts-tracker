@@ -9,6 +9,7 @@ const idFieldName = "ID"
 
 type entityStorage map[reflect.Type]Repository
 
+// TODO add custom struct tags to overwrite property name
 func GetReference(t reflect.Type) (interface{}, error) {
 	switch t.Kind() {
 	case reflect.Struct:
@@ -36,39 +37,32 @@ func GetReference(t reflect.Type) (interface{}, error) {
 	return nil, errors.New("could not get reference for non struct entity")
 }
 
-// TODO add custom struct tags to overwrite property name
-func (e entityStorage) GetValidReference(entity interface{}) (interface{}, error) {
+func (e entityStorage) AssertValidReference(entity interface{}) error {
 	v := reflect.ValueOf(entity)
 
 	switch v.Type().Kind() {
 	case reflect.Struct:
-		result := make(map[string]interface{}, v.NumField())
 		for i := 0; i < v.NumField(); i++ {
 			property := v.Field(i)
-			propertyName := v.Type().Field(i).Name
 			if property.Kind() == reflect.Struct {
 				if idField, hasID := property.Type().FieldByName(idFieldName); hasID && idField.Type.Kind() == reflect.String {
 					id := property.FieldByName(idFieldName).String()
 					propertyValue := reflect.New(property.Type()).Interface()
 					if err := e[property.Type()].Read(id, &propertyValue); err != nil {
-						return nil, err
+						return err
 					}
 
-					result[propertyName] = id
 				} else {
-					referencingEntity, err := e.GetValidReference(property.Interface())
+					err := e.AssertValidReference(property.Interface())
 					if err != nil {
-						return nil, err
+						return err
 					}
-					result[propertyName] = referencingEntity
 				}
-			} else {
-				result[propertyName] = property.Interface()
 			}
 		}
 
-		return result, nil
+		return nil
 	}
 
-	return nil, errors.New("could not get reference for non struct entity")
+	return errors.New("could not get reference for non struct entity")
 }

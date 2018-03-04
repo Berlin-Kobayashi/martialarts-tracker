@@ -11,37 +11,32 @@ var indexedDataStorage = entityStorage{
 	reflect.TypeOf(deeplyNestedIndexedData{}): dummyRepository{},
 }
 
-func TestEntityStorage_GetValidReference(t *testing.T) {
+func TestEntityStorage_AssertValidReference(t *testing.T) {
 	input := indexedDataFixture
-
-	expected := map[string]interface{}{
-		"ID":   idFixture,
-		"Data": dataValueFixture,
-		"NestedData": map[string]interface{}{
-			"Data":                    nestedDataValueFixture,
-			"DeeplyNestedIndexedData": deeplyNestedIDFixture,
-		},
-		"NestedIndexedData": nestedIDFixture,
-	}
-
-	actual, err := indexedDataStorage.GetValidReference(input)
+	err := indexedDataStorage.AssertValidReference(input)
 
 	if err != nil {
 		t.Fatalf("Unexpected error %s", err)
 	}
+}
 
-	if !reflect.DeepEqual(actual, expected) {
-		t.Errorf("Unexpected result %+v", actual)
+func TestEntityStorage_AssertValidReferenceForUnsupportedType(t *testing.T) {
+	input := 1
+
+	err := indexedDataStorage.AssertValidReference(input)
+
+	if err == nil {
+		t.Error("Expected error")
 	}
 }
 
-func TestEntityStorage_GetValidReferenceForUnsupportedType(t *testing.T) {
-	input := 1
-
-	_, err := indexedDataStorage.GetValidReference(input)
+func TestEntityStorage_AssertValidReferenceForMissingResource(t *testing.T) {
+	input := indexedDataFixture
+	input.NestedIndexedData.ID = "123"
+	err := indexedDataStorage.AssertValidReference(input)
 
 	if err == nil {
-		t.Error("Expected error ")
+		t.Error("Expected error")
 	}
 }
 
@@ -75,6 +70,6 @@ func TestGetReferenceForUnsupportedType(t *testing.T) {
 	_, err := GetReference(reflect.TypeOf(input))
 
 	if err == nil {
-		t.Error("Expected error ")
+		t.Error("Expected error")
 	}
 }
