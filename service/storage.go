@@ -92,6 +92,14 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	response, err := json.Marshal(reference)
+	if err != nil {
+		fmt.Println(err)
+		rw.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
+
 	err = entityDefinition.R.Save(reference)
 	if err != nil {
 		fmt.Println(err)
@@ -101,14 +109,6 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
 		default:
 			rw.WriteHeader(http.StatusInternalServerError)
 		}
-
-		return
-	}
-
-	response, err := json.Marshal(reference)
-	if err != nil {
-		fmt.Println(err)
-		rw.WriteHeader(http.StatusInternalServerError)
 
 		return
 	}

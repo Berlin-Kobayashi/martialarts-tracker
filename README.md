@@ -21,3 +21,4 @@ See examples directory
 ## TODOs
  - make CRUD complete
  - read all
+ - no more need to add `bson:"_id"` to ID fields

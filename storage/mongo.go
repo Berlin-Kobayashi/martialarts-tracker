@@ -24,6 +24,8 @@ func NewMongoRepository(url, db, collectionName string) (MongoRepository, error)
 }
 
 func (s MongoRepository) Save(data interface{}) error {
+	data.(map[string]interface{})["_id"] = data.(map[string]interface{})["ID"]
+	delete(data.(map[string]interface{}), "ID")
 	err := s.collection.Insert(data)
 	if err != nil {
 		return err
