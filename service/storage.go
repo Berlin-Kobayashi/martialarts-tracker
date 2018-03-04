@@ -68,16 +68,7 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	entity := reflect.New(entityDefinition.T).Interface()
-	err = json.Unmarshal(content, &entity)
-	if err != nil {
-		fmt.Println(err)
-		rw.WriteHeader(http.StatusBadRequest)
-
-		return
-	}
-
-	err = s.entityStorage.AssertExistingResource(entity)
+	reference, err := GetReference(entityDefinition.T)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusInternalServerError)
@@ -85,7 +76,15 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reference, err := GetReference(entityDefinition.T)
+	err = json.Unmarshal(content, &reference)
+	if err != nil {
+		fmt.Println(err)
+		rw.WriteHeader(http.StatusBadRequest)
+
+		return
+	}
+
+	err = s.entityStorage.AssertExistingReferences(reference)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusInternalServerError)
