@@ -19,5 +19,6 @@ See examples directory
 
 
 ## TODOs
+ - dereferencing
  - make CRUD complete
  - read all

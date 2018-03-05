@@ -24,60 +24,20 @@ func main() {
 }
 
 func build(mongoURL, mongoDB string) (service.StorageService, error) {
-	trainingUnitRepository, err := storage.NewMongoRepository(
+	repository, err := storage.NewMongoRepository(
 		mongoURL,
 		mongoDB,
-		"training_units",
-	)
-	if err != nil {
-		return service.StorageService{}, err
-	}
-
-	techniqueRepository, err := storage.NewMongoRepository(
-		mongoURL,
-		mongoDB,
-		"techniques",
-	)
-	if err != nil {
-		return service.StorageService{}, err
-	}
-
-	methodRepository, err := storage.NewMongoRepository(
-		mongoURL,
-		mongoDB,
-		"methods",
-	)
-	if err != nil {
-		return service.StorageService{}, err
-	}
-
-	exerciseRepository, err := storage.NewMongoRepository(
-		mongoURL,
-		mongoDB,
-		"exercises",
 	)
 	if err != nil {
 		return service.StorageService{}, err
 	}
 
 	entityDefinitions := service.EntityDefinitions{
-		"training-unit": {
-			T: reflect.TypeOf(entity.TrainingUnit{}),
-			R: trainingUnitRepository,
-		},
-		"technique": {
-			T: reflect.TypeOf(entity.Technique{}),
-			R: techniqueRepository,
-		},
-		"method": {
-			T: reflect.TypeOf(entity.Method{}),
-			R: methodRepository,
-		},
-		"exercise": {
-			T: reflect.TypeOf(entity.Exercise{}),
-			R: exerciseRepository,
-		},
+		"training-unit": reflect.TypeOf(entity.TrainingUnit{}),
+		"technique":     reflect.TypeOf(entity.Technique{}),
+		"method":        reflect.TypeOf(entity.Method{}),
+		"exercise":      reflect.TypeOf(entity.Exercise{}),
 	}
 
-	return service.NewStorageService(entityDefinitions, uuid.V4{})
+	return service.NewStorageService(entityDefinitions, uuid.V4{}, repository)
 }

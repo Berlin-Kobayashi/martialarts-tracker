@@ -6,10 +6,10 @@ import (
 )
 
 type MongoRepository struct {
-	collection *mgo.Collection
+	database *mgo.Database
 }
 
-func NewMongoRepository(url, db, collectionName string) (MongoRepository, error) {
+func NewMongoRepository(url, db string) (MongoRepository, error) {
 	session, err := mgo.Dial(url)
 
 	if err != nil {
@@ -18,15 +18,13 @@ func NewMongoRepository(url, db, collectionName string) (MongoRepository, error)
 
 	database := session.DB(db)
 
-	collection := database.C(collectionName)
-
-	return MongoRepository{collection}, nil
+	return MongoRepository{database: database}, nil
 }
 
-func (s MongoRepository) Save(data interface{}) error {
+func (s MongoRepository) Save(collectionName string, data interface{}) error {
 	data.(map[string]interface{})["_id"] = data.(map[string]interface{})["ID"]
 	delete(data.(map[string]interface{}), "ID")
-	err := s.collection.Insert(data)
+	err := s.database.C(collectionName).Insert(data)
 	if err != nil {
 		return err
 	}
@@ -34,8 +32,8 @@ func (s MongoRepository) Save(data interface{}) error {
 	return nil
 }
 
-func (s MongoRepository) Read(id string, result *interface{}) error {
-	query := s.collection.Find(bson.M{"_id": id})
+func (s MongoRepository) Read(collectionName string, id string, result *interface{}) error {
+	query := s.database.C(collectionName).Find(bson.M{"_id": id})
 
 	n, err := query.Count()
 	if err != nil {

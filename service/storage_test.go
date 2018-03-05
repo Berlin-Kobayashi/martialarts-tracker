@@ -18,14 +18,9 @@ var storageService = createStorageService()
 func TestNewStorageService(t *testing.T) {
 	expected := StorageService{
 		entityDefinitions: EntityDefinitions{
-			entityName: {
-				T: reflect.TypeOf(deeplyNestedIndexedData{}),
-				R: dummyRepository{},
-			},
+			entityName: reflect.TypeOf(deeplyNestedIndexedData{}),
 		},
-		entityStorage: entityStorage{
-			reflect.TypeOf(deeplyNestedIndexedData{}): dummyRepository{},
-		},
+		repository:  dummyRepository{},
 		idGenerator: dummyUUIDGenerator{},
 	}
 
@@ -37,12 +32,10 @@ func TestNewStorageService(t *testing.T) {
 func TestNewStorageServiceWrongEntityType(t *testing.T) {
 	_, err := NewStorageService(
 		EntityDefinitions{
-			entityName: {
-				T: reflect.TypeOf(1),
-				R: dummyRepository{},
-			},
+			entityName: reflect.TypeOf(1),
 		},
 		dummyUUIDGenerator{},
+		dummyRepository{},
 	)
 
 	if err == nil {
@@ -53,12 +46,10 @@ func TestNewStorageServiceWrongEntityType(t *testing.T) {
 func TestNewStorageServiceNoIDEntity(t *testing.T) {
 	_, err := NewStorageService(
 		EntityDefinitions{
-			entityName: {
-				T: reflect.TypeOf(struct{}{}),
-				R: dummyRepository{},
-			},
+			entityName: reflect.TypeOf(struct{}{}),
 		},
 		dummyUUIDGenerator{},
+		dummyRepository{},
 	)
 
 	if err == nil {
@@ -69,12 +60,10 @@ func TestNewStorageServiceNoIDEntity(t *testing.T) {
 func TestNewStorageServiceWrongIDTypeEntity(t *testing.T) {
 	_, err := NewStorageService(
 		EntityDefinitions{
-			entityName: {
-				T: reflect.TypeOf(struct{ ID int }{}),
-				R: dummyRepository{},
-			},
+			entityName: reflect.TypeOf(struct{ ID int }{}),
 		},
 		dummyUUIDGenerator{},
+		dummyRepository{},
 	)
 
 	if err == nil {
@@ -160,12 +149,10 @@ func TestStorageService_ServeHTTPPOSTTUnknownEntity(t *testing.T) {
 func createStorageService() StorageService {
 	storageService, err := NewStorageService(
 		EntityDefinitions{
-			entityName: {
-				T: reflect.TypeOf(deeplyNestedIndexedData{}),
-				R: dummyRepository{},
-			},
+			entityName: reflect.TypeOf(deeplyNestedIndexedData{}),
 		},
 		dummyUUIDGenerator{},
+		dummyRepository{},
 	)
 
 	if err != nil {

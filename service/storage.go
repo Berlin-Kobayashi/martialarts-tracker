@@ -9,47 +9,38 @@ import (
 	"reflect"
 )
 
-type EntityDefinitions map[string]EntityDefinition
+type EntityDefinitions map[string]reflect.Type
 
-func (e EntityDefinitions) createEntityStorage() (entityStorage, error) {
-	es := make(entityStorage, len(e))
-	for _, v := range e {
-		t := v.T
+func (e EntityDefinitions) validate() error {
+	for _, t := range e {
 		if t.Kind() != reflect.Struct {
-			return entityStorage{}, fmt.Errorf("all entities have to be struct but %q is a %q", t.Name(), t.Kind())
+			return fmt.Errorf("all entities have to be struct but %q is a %q", t.Name(), t.Kind())
 		}
 
 		if idField, hasID := t.FieldByName(idFieldName); !hasID || idField.Type.Kind() != reflect.String {
-			return entityStorage{}, fmt.Errorf("all entities have to have an ID string field but %q does not", t.Name())
+			return fmt.Errorf("all entities have to have an ID string field but %q does not", t.Name())
 		}
-
-		es[t] = v.R
 	}
 
-	return es, nil
-}
-
-type EntityDefinition struct {
-	R Repository
-	T reflect.Type
+	return nil
 }
 
 type StorageService struct {
 	entityDefinitions EntityDefinitions
-	entityStorage     entityStorage
 	idGenerator       IDGenerator
+	repository        Repository
 }
 
-func NewStorageService(entityDefinitions EntityDefinitions, idGenerator IDGenerator) (StorageService, error) {
-	entityStorage, err := entityDefinitions.createEntityStorage()
+func NewStorageService(entityDefinitions EntityDefinitions, idGenerator IDGenerator, repository Repository) (StorageService, error) {
+	err := entityDefinitions.validate()
 	if err != nil {
 		return StorageService{}, err
 	}
 
 	return StorageService{
 		entityDefinitions: entityDefinitions,
-		entityStorage:     entityStorage,
 		idGenerator:       idGenerator,
+		repository:        repository,
 	}, nil
 }
 
@@ -67,7 +58,7 @@ func (s StorageService) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 func (s StorageService) get(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Add("Content-Type", "application/json")
 
-	entityDefinition, err := s.detectEntityDefinition(r)
+	t, err := s.detectType(r)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusNotFound)
@@ -78,7 +69,7 @@ func (s StorageService) get(rw http.ResponseWriter, r *http.Request) {
 	indexRegex := regexp.MustCompile("^.*/([^/]+)$")
 	index := string(indexRegex.ReplaceAll([]byte(r.URL.Path), []byte("$1")))
 
-	reference, err := GetReference(entityDefinition.T)
+	reference, err := GetReference(t)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusInternalServerError)
@@ -86,7 +77,7 @@ func (s StorageService) get(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = entityDefinition.R.Read(index, &reference)
+	err = s.repository.Read(t.Name(), index, &reference)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusNotFound)
@@ -114,7 +105,7 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(http.StatusInternalServerError)
 	}
 
-	entityDefinition, err := s.detectEntityDefinition(r)
+	t, err := s.detectType(r)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusNotFound)
@@ -122,7 +113,7 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reference, err := GetReference(entityDefinition.T)
+	reference, err := GetReference(t)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusInternalServerError)
@@ -141,7 +132,7 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
 	id := s.idGenerator.Generate()
 	reference.(map[string]interface{})[idFieldName] = id
 
-	err = s.entityStorage.AssertExistingReferences(reference, entityDefinition.T)
+	err = AssertExistingReferences(s.repository, reference, t)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusBadRequest)
@@ -157,15 +148,10 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = entityDefinition.R.Save(reference)
+	err = s.repository.Save(t.Name(), reference)
 	if err != nil {
 		fmt.Println(err)
-		switch err {
-		case UnsupportedMethod:
-			rw.WriteHeader(http.StatusMethodNotAllowed)
-		default:
-			rw.WriteHeader(http.StatusInternalServerError)
-		}
+		rw.WriteHeader(http.StatusInternalServerError)
 
 		return
 	}
@@ -173,7 +159,7 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
 	rw.Write(response)
 }
 
-func (s StorageService) detectEntityDefinition(r *http.Request) (EntityDefinition, error) {
+func (s StorageService) detectType(r *http.Request) (reflect.Type, error) {
 	entityNameRegex := regexp.MustCompile("^/(.*)/[^/]+$")
 
 	if !entityNameRegex.Match([]byte(r.URL.Path)) {
@@ -182,10 +168,10 @@ func (s StorageService) detectEntityDefinition(r *http.Request) (EntityDefinitio
 
 	entityName := string(entityNameRegex.ReplaceAll([]byte(r.URL.Path), []byte("$1")))
 
-	entityType, ok := s.entityDefinitions[entityName]
+	t, ok := s.entityDefinitions[entityName]
 	if !ok {
-		return EntityDefinition{}, fmt.Errorf("entity %s is not defined", entityName)
+		return nil, fmt.Errorf("entity %s is not defined", entityName)
 	}
 
-	return entityType, nil
+	return t, nil
 }

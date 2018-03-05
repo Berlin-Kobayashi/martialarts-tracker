@@ -6,8 +6,6 @@ import (
 
 const idFieldName = "ID"
 
-type entityStorage map[reflect.Type]Repository
-
 func GetReference(t reflect.Type) (interface{}, error) {
 	switch t.Kind() {
 	case reflect.Struct:
@@ -66,15 +64,15 @@ func GetReference(t reflect.Type) (interface{}, error) {
 	return reflect.New(t).Interface(), nil
 }
 
-func (e entityStorage) AssertExistingResource(entity interface{}, t reflect.Type) error {
-	return e.assertExistingResourceRecursively(entity, t, true)
+func AssertExistingResource(repository Repository, entity interface{}, t reflect.Type) error {
+	return assertExistingResourceRecursively(repository, entity, t, true)
 }
 
-func (e entityStorage) AssertExistingReferences(entity interface{}, t reflect.Type) error {
-	return e.assertExistingResourceRecursively(entity, t, false)
+func AssertExistingReferences(repository Repository, entity interface{}, t reflect.Type) error {
+	return assertExistingResourceRecursively(repository, entity, t, false)
 }
 
-func (e entityStorage) assertExistingResourceRecursively(entity interface{}, t reflect.Type, checkRoot bool) error {
+func assertExistingResourceRecursively(repository Repository, entity interface{}, t reflect.Type, checkRoot bool) error {
 	v := reflect.ValueOf(entity)
 	switch t.Kind() {
 	case reflect.Struct:
@@ -87,7 +85,7 @@ func (e entityStorage) assertExistingResourceRecursively(entity interface{}, t r
 			}
 
 			propertyValue := reflect.New(t).Interface()
-			if err := e[t].Read(id, &propertyValue); err != nil {
+			if err := repository.Read(t.Name(), id, &propertyValue); err != nil {
 				return err
 			}
 		}
@@ -95,7 +93,7 @@ func (e entityStorage) assertExistingResourceRecursively(entity interface{}, t r
 		if v.Kind() != reflect.String {
 			for i := 0; i < t.NumField(); i++ {
 				fieldValue := v.MapIndex(reflect.ValueOf(t.Field(i).Name))
-				err := e.assertExistingResourceRecursively(fieldValue.Interface(), t.Field(i).Type, true)
+				err := assertExistingResourceRecursively(repository, fieldValue.Interface(), t.Field(i).Type, true)
 				if err != nil {
 					return err
 				}
@@ -105,14 +103,14 @@ func (e entityStorage) assertExistingResourceRecursively(entity interface{}, t r
 		return nil
 	case reflect.Map:
 		for _, k := range v.MapKeys() {
-			err := e.assertExistingResourceRecursively(v.MapIndex(k).Interface(), t.Elem(), true)
+			err := assertExistingResourceRecursively(repository, v.MapIndex(k).Interface(), t.Elem(), true)
 			if err != nil {
 				return err
 			}
 		}
 	case reflect.Slice:
 		for i := 0; i < v.Len(); i++ {
-			err := e.assertExistingResourceRecursively(v.Index(i).Interface(), t.Elem(), true)
+			err := assertExistingResourceRecursively(repository, v.Index(i).Interface(), t.Elem(), true)
 			if err != nil {
 				return err
 			}

@@ -16,23 +16,23 @@ var recordedData interface{}
 type dummyRepository struct {
 }
 
-func (s dummyRepository) Save(data interface{}) error {
+func (s dummyRepository) Save(collectionName string, data interface{}) error {
 	recordedData = data
 
 	return nil
 }
 
-func (s dummyRepository) Read(id string, result *interface{}) error {
-		switch id {
-		case idFixture:
-			*result = indexedDataFixture
-		case nestedIDFixture:
-			*result = nestedDataFixture
-		case deeplyNestedIDFixture:
-			*result = deeplyNestedIndexedDataFixture
-		default:
-			return storage.NotFound
-		}
+func (s dummyRepository) Read(collectionName string, id string, result *interface{}) error {
+	switch id {
+	case idFixture:
+		*result = indexedDataFixture
+	case nestedIDFixture:
+		*result = nestedDataFixture
+	case deeplyNestedIDFixture:
+		*result = deeplyNestedIndexedDataFixture
+	default:
+		return storage.NotFound
+	}
 
 	return nil
 }
