@@ -27,9 +27,9 @@ func (s dummyRepository) Read(id string, result *interface{}) error {
 		case idFixture:
 			*result = indexedDataFixture
 		case nestedIDFixture:
-			*result = nestedIDFixture
+			*result = nestedDataFixture
 		case deeplyNestedIDFixture:
-			*result = deeplyNestedIDFixture
+			*result = deeplyNestedIndexedDataFixture
 		default:
 			return storage.NotFound
 		}

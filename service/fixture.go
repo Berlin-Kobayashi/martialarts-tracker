@@ -51,12 +51,13 @@ var nestedIndexedDataFixture = nestedIndexedData{
 
 var deeplyNestedIndexedDataFixture = deeplyNestedIndexedData{
 	ID:   deeplyNestedIDFixture,
-	Data: "myDeeplyNestedData",
+	Data: deeplyNestedDataValueFixture,
 }
 
 var idFixture = "myID"
 var nestedIDFixture = "myNestedID"
 var deeplyNestedIDFixture = "deeplyNestedID"
+var deeplyNestedDataValueFixture = "myDeeplyNestedData"
 
 var dataValueFixture = "myData"
 var nestedDataValueFixture = "myNestedData"

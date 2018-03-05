@@ -49,6 +49,44 @@ func (s StorageService) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (s StorageService) get(rw http.ResponseWriter, r *http.Request) {
+	rw.Header().Add("Content-Type", "application/json")
+
+	entityDefinition, err := s.detectEntityDefinition(r)
+	if err != nil {
+		fmt.Println(err)
+		rw.WriteHeader(http.StatusNotFound)
+
+		return
+	}
+
+	indexRegex := regexp.MustCompile("^.*/([^/]+)$")
+	index := string(indexRegex.ReplaceAll([]byte(r.URL.Path), []byte("$1")))
+
+	reference, err := GetReference(entityDefinition.T)
+	if err != nil {
+		fmt.Println(err)
+		rw.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
+
+	err = entityDefinition.R.Read(index, &reference)
+	if err != nil {
+		fmt.Println(err)
+		rw.WriteHeader(http.StatusNotFound)
+
+		return
+	}
+
+	response, err := json.Marshal(reference)
+	if err != nil {
+		fmt.Println(err)
+		rw.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
+
+	rw.Write(response)
 }
 
 func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
