@@ -13,7 +13,7 @@ func GetReference(t reflect.Type) (interface{}, error) {
 		for i := 0; i < t.NumField(); i++ {
 			property := t.Field(i)
 			if property.Type.Kind() == reflect.Struct {
-				if idField, hasID := property.Type.FieldByName(idFieldName); hasID && idField.Type.Kind() == reflect.String {
+				if CanReference(property.Type) {
 					result[property.Name] = reflect.New(reflect.TypeOf("")).Interface()
 				} else {
 					referencingEntity, err := GetReference(property.Type)
@@ -35,7 +35,7 @@ func GetReference(t reflect.Type) (interface{}, error) {
 	case reflect.Map:
 		property := t.Elem()
 		if property.Kind() == reflect.Struct {
-			if idField, hasID := property.FieldByName(idFieldName); hasID && idField.Type.Kind() == reflect.String {
+			if CanReference(property) {
 				return reflect.New(reflect.TypeOf(map[string]string{})).Interface(), nil
 			} else {
 				return GetReference(property)
@@ -51,7 +51,7 @@ func GetReference(t reflect.Type) (interface{}, error) {
 	case reflect.Slice:
 		property := t.Elem()
 		if property.Kind() == reflect.Struct {
-			if idField, hasID := property.FieldByName(idFieldName); hasID && idField.Type.Kind() == reflect.String {
+			if CanReference(property) {
 				return reflect.New(reflect.TypeOf([]string{})).Interface(), nil
 			} else {
 				return GetReference(property)
@@ -76,7 +76,7 @@ func assertExistingResourceRecursively(repository Repository, entity interface{}
 	v := reflect.ValueOf(entity)
 	switch t.Kind() {
 	case reflect.Struct:
-		if idField, hasID := t.FieldByName(idFieldName); checkRoot && hasID && idField.Type.Kind() == reflect.String {
+		if checkRoot && CanReference(t) {
 			id := ""
 			if v.Kind() == reflect.String {
 				id = v.Interface().(string)
@@ -118,4 +118,14 @@ func assertExistingResourceRecursively(repository Repository, entity interface{}
 	}
 
 	return nil
+}
+
+func CanReference(t reflect.Type) bool {
+	if t.Kind() != reflect.Struct {
+		return false
+	}
+
+	idField, hasID := t.FieldByName(idFieldName)
+
+	return hasID && idField.Type.Kind() == reflect.String
 }

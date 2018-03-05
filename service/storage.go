@@ -13,12 +13,8 @@ type EntityDefinitions map[string]reflect.Type
 
 func (e EntityDefinitions) validate() error {
 	for _, t := range e {
-		if t.Kind() != reflect.Struct {
-			return fmt.Errorf("all entities have to be struct but %q is a %q", t.Name(), t.Kind())
-		}
-
-		if idField, hasID := t.FieldByName(idFieldName); !hasID || idField.Type.Kind() != reflect.String {
-			return fmt.Errorf("all entities have to have an ID string field but %q does not", t.Name())
+		if !CanReference(t) {
+			return fmt.Errorf("all entities have to be referenceable by having an ID string field but %q does not", t.Name())
 		}
 	}
 

@@ -76,3 +76,37 @@ func createReferenceFixture() map[string]interface{} {
 		"MappedData":        map[string]string{mapIndexFixture: dataValueFixture},
 	}
 }
+
+func TestCanReference(t *testing.T) {
+	cases := []struct {
+		t            reflect.Type
+		canReference bool
+		name         string
+	}{
+		{
+			reflect.TypeOf(deeplyNestedIndexedData{}),
+			true,
+			"Legal",
+		},
+		{
+			reflect.TypeOf(1),
+			false,
+			"WrongType",
+		},
+		{
+			reflect.TypeOf(struct{}{}),
+			false,
+			"NoID",
+		},
+		{
+			reflect.TypeOf(struct{ ID int }{}),
+			false,
+			"WrongIDType",
+		},
+	}
+	for _, c := range cases {
+		if CanReference(c.t) != c.canReference {
+			t.Errorf("Does not return expected result for %q type", c.name)
+		}
+	}
+}
