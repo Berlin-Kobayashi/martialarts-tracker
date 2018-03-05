@@ -22,22 +22,17 @@ func (s dummyRepository) Save(data interface{}) error {
 	return nil
 }
 
-func (s dummyRepository) Read(id string, result interface{}) error {
-	switch resultPtr := result.(type) {
-	case *interface{}:
+func (s dummyRepository) Read(id string, result *interface{}) error {
 		switch id {
 		case idFixture:
-			*resultPtr = indexedDataFixture
+			*result = indexedDataFixture
 		case nestedIDFixture:
-			*resultPtr = nestedIDFixture
+			*result = nestedIDFixture
 		case deeplyNestedIDFixture:
-			*resultPtr = deeplyNestedIDFixture
+			*result = deeplyNestedIDFixture
 		default:
 			return storage.NotFound
 		}
-	default:
-		return UnsupportedEntity
-	}
 
 	return nil
 }

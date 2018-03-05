@@ -34,7 +34,7 @@ func (s MongoRepository) Save(data interface{}) error {
 	return nil
 }
 
-func (s MongoRepository) Read(id string, result interface{}) error {
+func (s MongoRepository) Read(id string, result *interface{}) error {
 	query := s.collection.Find(bson.M{"_id": id})
 
 	n, err := query.Count()
@@ -46,10 +46,13 @@ func (s MongoRepository) Read(id string, result interface{}) error {
 		return NotFound
 	}
 
-	err = query.One(result)
+	err = query.One(&result)
 	if err != nil {
 		return Invalid
 	}
+
+	(*result).(bson.M)["ID"] = (*result).(bson.M)["_id"]
+	delete((*result).(bson.M), "_id")
 
 	return nil
 }
