@@ -11,13 +11,22 @@ import (
 
 type EntityDefinitions map[string]EntityDefinition
 
-func (e EntityDefinitions) createEntityStorage() entityStorage {
-	entityStorage := make(entityStorage, len(e))
+func (e EntityDefinitions) createEntityStorage() (entityStorage, error) {
+	es := make(entityStorage, len(e))
 	for _, v := range e {
-		entityStorage[v.T] = v.R
+		t := v.T
+		if t.Kind() != reflect.Struct {
+			return entityStorage{}, fmt.Errorf("all entities have to be struct but %q is a %q", t.Name(), t.Kind())
+		}
+
+		if idField, hasID := t.FieldByName(idFieldName); !hasID || idField.Type.Kind() != reflect.String {
+			return entityStorage{}, fmt.Errorf("all entities have to have an ID string field but %q does not", t.Name())
+		}
+
+		es[t] = v.R
 	}
 
-	return entityStorage
+	return es, nil
 }
 
 type EntityDefinition struct {
@@ -28,13 +37,20 @@ type EntityDefinition struct {
 type StorageService struct {
 	entityDefinitions EntityDefinitions
 	entityStorage     entityStorage
+	idGenerator       IDGenerator
 }
 
-func NewStorageService(entityDefinitions EntityDefinitions) StorageService {
+func NewStorageService(entityDefinitions EntityDefinitions, idGenerator IDGenerator) (StorageService, error) {
+	entityStorage, err := entityDefinitions.createEntityStorage()
+	if err != nil {
+		return StorageService{}, err
+	}
+
 	return StorageService{
 		entityDefinitions: entityDefinitions,
-		entityStorage:     entityDefinitions.createEntityStorage(),
-	}
+		entityStorage:     entityStorage,
+		idGenerator:       idGenerator,
+	}, nil
 }
 
 func (s StorageService) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
@@ -121,6 +137,9 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+
+	id := s.idGenerator.Generate()
+	reference.(map[string]interface{})[idFieldName] = id
 
 	err = s.entityStorage.AssertExistingReferences(reference, entityDefinition.T)
 	if err != nil {

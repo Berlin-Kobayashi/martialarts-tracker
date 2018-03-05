@@ -6,6 +6,7 @@ import (
 	"github.com/DanShu93/martialarts-tracker/service"
 	"github.com/DanShu93/martialarts-tracker/entity"
 	"reflect"
+	"github.com/DanShu93/martialarts-tracker/uuid"
 )
 
 func main() {
@@ -78,5 +79,5 @@ func build(mongoURL, mongoDB string) (service.StorageService, error) {
 		},
 	}
 
-	return service.NewStorageService(entityDefinitions), nil
+	return service.NewStorageService(entityDefinitions, uuid.V4{})
 }

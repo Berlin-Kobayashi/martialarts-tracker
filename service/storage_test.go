@@ -13,13 +13,73 @@ import (
 
 var entityName = "data"
 
-var storageService = StorageService{
-	entityDefinitions: EntityDefinitions{
-		entityName: {
-			T: reflect.TypeOf(deeplyNestedIndexedData{}),
-			R: dummyRepository{},
+var storageService = createStorageService()
+
+func TestNewStorageService(t *testing.T) {
+	expected := StorageService{
+		entityDefinitions: EntityDefinitions{
+			entityName: {
+				T: reflect.TypeOf(deeplyNestedIndexedData{}),
+				R: dummyRepository{},
+			},
 		},
-	},
+		entityStorage: entityStorage{
+			reflect.TypeOf(deeplyNestedIndexedData{}): dummyRepository{},
+		},
+		idGenerator: dummyUUIDGenerator{},
+	}
+
+	if !reflect.DeepEqual(storageService, expected) {
+		t.Errorf("Does not return expected result. Actual %s Expected %s", storageService, expected)
+	}
+}
+
+func TestNewStorageServiceWrongEntityType(t *testing.T) {
+	_, err := NewStorageService(
+		EntityDefinitions{
+			entityName: {
+				T: reflect.TypeOf(1),
+				R: dummyRepository{},
+			},
+		},
+		dummyUUIDGenerator{},
+	)
+
+	if err == nil {
+		t.Error("Expected error")
+	}
+}
+
+func TestNewStorageServiceNoIDEntity(t *testing.T) {
+	_, err := NewStorageService(
+		EntityDefinitions{
+			entityName: {
+				T: reflect.TypeOf(struct{}{}),
+				R: dummyRepository{},
+			},
+		},
+		dummyUUIDGenerator{},
+	)
+
+	if err == nil {
+		t.Error("Expected error")
+	}
+}
+
+func TestNewStorageServiceWrongIDTypeEntity(t *testing.T) {
+	_, err := NewStorageService(
+		EntityDefinitions{
+			entityName: {
+				T: reflect.TypeOf(struct{ ID int }{}),
+				R: dummyRepository{},
+			},
+		},
+		dummyUUIDGenerator{},
+	)
+
+	if err == nil {
+		t.Error("Expected error")
+	}
 }
 
 func TestStorageService_ServeHTTPGET(t *testing.T) {
@@ -45,7 +105,7 @@ func TestStorageService_ServeHTTPPOST(t *testing.T) {
 	storageService.ServeHTTP(w, req)
 
 	expected := map[string]interface{}{
-		"ID":   deeplyNestedIDFixture,
+		"ID":   uuidV4Fixture,
 		"Data": deeplyNestedDataValueFixture,
 	}
 
@@ -95,6 +155,24 @@ func TestStorageService_ServeHTTPPOSTTUnknownEntity(t *testing.T) {
 	if w.Result().StatusCode != http.StatusNotFound {
 		t.Errorf("Does not return proper status for unkown entity. expected data Actual %v Expected %v", w.Result().StatusCode, http.StatusMethodNotAllowed)
 	}
+}
+
+func createStorageService() StorageService {
+	storageService, err := NewStorageService(
+		EntityDefinitions{
+			entityName: {
+				T: reflect.TypeOf(deeplyNestedIndexedData{}),
+				R: dummyRepository{},
+			},
+		},
+		dummyUUIDGenerator{},
+	)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return storageService
 }
 
 func getDataFixtureJSON(t *testing.T) string {

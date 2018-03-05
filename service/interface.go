@@ -5,6 +5,6 @@ type Repository interface {
 	Read(id string, result *interface{}) error
 }
 
-type UUIDGenerator interface {
+type IDGenerator interface {
 	Generate() string
 }
