@@ -45,7 +45,7 @@ var nestedDataFixture = nestedData{
 
 var nestedIndexedDataFixture = nestedIndexedData{
 	ID:                      nestedIDFixture,
-	Data:                    nestedIndexedDataFixtureValue,
+	Data:                    nestedIndexedDataValueFixture,
 	DeeplyNestedIndexedData: deeplyNestedIndexedDataFixture,
 }
 
@@ -61,7 +61,7 @@ var deeplyNestedDataValueFixture = "myDeeplyNestedData"
 
 var dataValueFixture = "myData"
 var nestedDataValueFixture = "myNestedData"
-var nestedIndexedDataFixtureValue = "myNestedIndexedData"
+var nestedIndexedDataValueFixture = "myNestedIndexedData"
 
 var mapIndexFixture = "myMapID"
 

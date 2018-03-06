@@ -25,11 +25,29 @@ func (s dummyRepository) Save(collectionName string, data interface{}) error {
 func (s dummyRepository) Read(collectionName string, id string, result *interface{}) error {
 	switch id {
 	case idFixture:
-		*result = indexedDataFixture
+		*result = map[string]interface{}{
+			"ID":   idFixture,
+			"Data": dataValueFixture,
+			"NestedData": map[string]interface{}{
+				"Data":                    nestedDataValueFixture,
+				"DeeplyNestedIndexedData": deeplyNestedIDFixture,
+			},
+			"NestedIndexedData": nestedIDFixture,
+			"MappedIndexedData": map[string]string{mapIndexFixture: deeplyNestedIDFixture},
+			"SlicedIndexedData": []string{deeplyNestedIDFixture},
+			"MappedData":        map[string]string{mapIndexFixture: dataValueFixture},
+		}
 	case nestedIDFixture:
-		*result = nestedDataFixture
+		*result = map[string]interface{}{
+			"ID":                       nestedIDFixture,
+			"Data":                     nestedIndexedDataValueFixture,
+			"DeeplyNestedIndexedData" : deeplyNestedIDFixture,
+		}
 	case deeplyNestedIDFixture:
-		*result = deeplyNestedIndexedDataFixture
+		*result = map[string]interface{}{
+			"ID":   deeplyNestedIDFixture,
+			"Data": deeplyNestedDataValueFixture,
+		}
 	default:
 		return storage.NotFound
 	}

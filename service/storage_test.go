@@ -76,15 +76,23 @@ func TestStorageService_ServeHTTPGET(t *testing.T) {
 	w := httptest.NewRecorder()
 	storageService.ServeHTTP(w, req)
 
-	expectedBody := getDataFixtureJSON(t)
+	expected := map[string]interface{}{
+		"ID":   deeplyNestedIDFixture,
+		"Data": deeplyNestedDataValueFixture,
+	}
 
 	content, err := ioutil.ReadAll(w.Result().Body)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if string(content) != expectedBody {
-		t.Errorf("Does not produce expected response. Actual %s Expected %s", content, expectedBody)
+	response := map[string]interface{}{}
+	err = json.Unmarshal(content, &response)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(response, expected) {
+		t.Errorf("Does not produce expected response. Actual %q Expected %q", response, expected)
 	}
 }
 
@@ -93,15 +101,23 @@ func TestStorageService_ServeHTTPGETExpand(t *testing.T) {
 	w := httptest.NewRecorder()
 	storageService.ServeHTTP(w, req)
 
-	expectedBody := getDataFixtureJSON(t)
+	expected := map[string]interface{}{
+		"ID":   deeplyNestedIDFixture,
+		"Data": deeplyNestedDataValueFixture,
+	}
 
 	content, err := ioutil.ReadAll(w.Result().Body)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if string(content) != expectedBody {
-		t.Errorf("Does not produce expected response. Actual %s Expected %s", content, expectedBody)
+	response := map[string]interface{}{}
+	err = json.Unmarshal(content, &response)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(response, expected) {
+		t.Errorf("Does not produce expected response. Actual %q Expected %q", response, expected)
 	}
 }
 

@@ -64,12 +64,20 @@ func GetReference(t reflect.Type) (interface{}, error) {
 	return reflect.New(t).Interface(), nil
 }
 
-func Derefence(repository Repository, index string, reference interface{}, result *interface{}) error {
-	t := reflect.TypeOf(result)
-	err := repository.Read(t.Name(), index, &reference)
+func Derefence(repository Repository, index string, result *interface{}) error {
+	t := reflect.TypeOf(result).Elem()
+	reference, err := GetReference(t)
+	if err != nil {
+
+		return err
+	}
+
+	err = repository.Read(t.Name(), index, &reference)
 	if err != nil {
 		return err
 	}
+
+	//TODO implement
 
 	*result = reference
 
