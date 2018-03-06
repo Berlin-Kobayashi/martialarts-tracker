@@ -64,6 +64,18 @@ func GetReference(t reflect.Type) (interface{}, error) {
 	return reflect.New(t).Interface(), nil
 }
 
+func Derefence(repository Repository, index string, reference interface{}, result *interface{}) error {
+	t := reflect.TypeOf(result)
+	err := repository.Read(t.Name(), index, &reference)
+	if err != nil {
+		return err
+	}
+
+	*result = reference
+
+	return nil
+}
+
 func AssertExistingResource(repository Repository, entity interface{}, t reflect.Type) error {
 	return assertExistingResourceRecursively(repository, entity, t, true)
 }

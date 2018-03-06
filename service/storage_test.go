@@ -88,6 +88,23 @@ func TestStorageService_ServeHTTPGET(t *testing.T) {
 	}
 }
 
+func TestStorageService_ServeHTTPGETExpand(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s/%s/%s", entityName, ActionExpand, deeplyNestedIDFixture), nil)
+	w := httptest.NewRecorder()
+	storageService.ServeHTTP(w, req)
+
+	expectedBody := getDataFixtureJSON(t)
+
+	content, err := ioutil.ReadAll(w.Result().Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if string(content) != expectedBody {
+		t.Errorf("Does not produce expected response. Actual %s Expected %s", content, expectedBody)
+	}
+}
+
 func TestStorageService_ServeHTTPPOST(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%s", entityName), bytes.NewReader([]byte(getDataFixtureJSON(t))))
 	w := httptest.NewRecorder()
