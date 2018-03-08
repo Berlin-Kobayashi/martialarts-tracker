@@ -113,14 +113,14 @@ func TestCanReference(t *testing.T) {
 
 func TestDerefence(t *testing.T) {
 	expected := indexedDataFixture
-	actual := indexedData{}
+	actual := reflect.New(reflect.TypeOf(indexedData{})).Interface()
 
 	err := Derefence(dummyRepository{}, createReferenceFixture(), &actual)
 	if err != nil {
 		t.Fatalf("Unexpected error %s", err)
 	}
 
-	if !reflect.DeepEqual(actual, expected) {
+	if !reflect.DeepEqual(actual, &expected) {
 		t.Errorf("Unexpected result\n\n Actual: %+v\n\n Expected: %+v", actual, expected)
 	}
 }

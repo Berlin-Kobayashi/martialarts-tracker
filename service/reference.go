@@ -89,7 +89,7 @@ func Derefence(repository Repository, reference, result interface{}) error {
 					return err
 				}
 
-				err = repository.Read(t.Field(i).Type.Name(), fieldValue.String(), &subReference)
+				err = repository.Read(t.Field(i).Type.Name(), fieldValue.Interface().(string), &subReference)
 				if err != nil {
 					return err
 				}
@@ -141,7 +141,7 @@ func Derefence(repository Repository, reference, result interface{}) error {
 					return err
 				}
 
-				err = repository.Read(t.Elem().Name(), fieldValue.String(), &subReference)
+				err = repository.Read(t.Elem().Name(), fieldValue.Interface().(string), &subReference)
 				if err != nil {
 					return err
 				}
@@ -169,8 +169,7 @@ func Derefence(repository Repository, reference, result interface{}) error {
 				if err != nil {
 					return err
 				}
-
-				err = repository.Read(t.Elem().Name(), fieldValue.String(), &subReference)
+				err = repository.Read(t.Elem().Name(), fieldValue.Interface().(string), &subReference)
 				if err != nil {
 					return err
 				}
