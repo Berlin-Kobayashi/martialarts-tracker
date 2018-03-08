@@ -2,7 +2,6 @@ package service
 
 import (
 	"reflect"
-	"fmt"
 )
 
 const idFieldName = "ID"
@@ -79,7 +78,6 @@ func Derefence(repository Repository, reference, result interface{}) error {
 			t = reflect.Indirect(reflect.ValueOf(result)).Elem().Elem().Type()
 		}
 	}
-	fmt.Println("A1", res, res.Type(), t)
 
 	switch t.Kind() {
 	case reflect.Struct:
@@ -108,7 +106,6 @@ func Derefence(repository Repository, reference, result interface{}) error {
 				}
 				res.Field(i).Set(subResultValue)
 			} else {
-				fmt.Println("B0", t.Field(i).Type.Kind())
 				switch t.Field(i).Type.Kind() {
 				case reflect.Struct, reflect.Map, reflect.Slice:
 					subResult := reflect.New(t.Field(i).Type).Interface()
@@ -116,17 +113,14 @@ func Derefence(repository Repository, reference, result interface{}) error {
 					case reflect.Map:
 						subResult = reflect.MakeMap(t.Field(i).Type).Interface()
 					case reflect.Slice:
-						subResult = reflect.MakeSlice(t.Field(i).Type, 0, 0).Interface()
+						subResult = reflect.MakeSlice(t.Field(i).Type, fieldValue.Len(), fieldValue.Cap()).Interface()
 					}
 
-					fmt.Println("B1", reflect.ValueOf(subResult).Type())
 					err := Derefence(repository, fieldValue.Interface(), &subResult)
 					if err != nil {
 						return err
 					}
 
-					fmt.Println("B", reflect.ValueOf(subResult).Type())
-					fmt.Println("C", subResult)
 					subResultValue := reflect.ValueOf(subResult)
 					if subResultValue.Kind() == reflect.Ptr {
 						subResultValue = subResultValue.Elem()
@@ -142,7 +136,27 @@ func Derefence(repository Repository, reference, result interface{}) error {
 		for _, k := range v.MapKeys() {
 			fieldValue := v.MapIndex(k)
 			if CanReference(t.Elem()) {
-				//TODO implement
+				subReference, err := GetReference(t.Elem())
+				if err != nil {
+					return err
+				}
+
+				err = repository.Read(t.Elem().Name(), fieldValue.String(), &subReference)
+				if err != nil {
+					return err
+				}
+
+				subResult := reflect.New(t.Elem()).Interface()
+				err = Derefence(repository, subReference, &subResult)
+				if err != nil {
+					return err
+				}
+
+				subResultValue := reflect.ValueOf(subResult)
+				if subResultValue.Kind() == reflect.Ptr {
+					subResultValue = subResultValue.Elem()
+				}
+				res.SetMapIndex(k, subResultValue)
 			} else {
 				res.SetMapIndex(k, fieldValue)
 			}
@@ -151,7 +165,27 @@ func Derefence(repository Repository, reference, result interface{}) error {
 		for i := 0; i < v.Len(); i++ {
 			fieldValue := v.Index(i)
 			if CanReference(t.Elem()) {
-				//TODO implement
+				subReference, err := GetReference(t.Elem())
+				if err != nil {
+					return err
+				}
+
+				err = repository.Read(t.Elem().Name(), fieldValue.String(), &subReference)
+				if err != nil {
+					return err
+				}
+
+				subResult := reflect.New(t.Elem()).Interface()
+				err = Derefence(repository, subReference, &subResult)
+				if err != nil {
+					return err
+				}
+
+				subResultValue := reflect.ValueOf(subResult)
+				if subResultValue.Kind() == reflect.Ptr {
+					subResultValue = subResultValue.Elem()
+				}
+				res.Index(i).Set(subResultValue)
 			} else {
 				res.Index(i).Set(fieldValue)
 			}
