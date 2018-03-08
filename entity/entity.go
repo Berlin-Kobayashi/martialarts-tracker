@@ -1,11 +1,9 @@
 package entity
 
-import "time"
-
 type TrainingUnit struct {
 	ID         string
-	Start      time.Time
-	End        time.Time
+	Start      string
+	End        string
 	Series     string
 	Techniques []Technique
 	Methods    []Method
