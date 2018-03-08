@@ -116,7 +116,23 @@ func (s StorageService) get(rw http.ResponseWriter, r *http.Request, t reflect.T
 func (s StorageService) expand(rw http.ResponseWriter, r *http.Request, t reflect.Type, index string) {
 	result := reflect.New(t).Interface()
 
-	err := Derefence(s.repository, index, &result)
+	reference, err := GetReference(t)
+	if err != nil {
+		fmt.Println(err)
+		rw.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
+
+	err = s.repository.Read(t.Name(), index, &reference)
+	if err != nil {
+		fmt.Println(err)
+		rw.WriteHeader(http.StatusNotFound)
+
+		return
+	}
+
+	err = Derefence(s.repository, reference, &result)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusNotFound)
