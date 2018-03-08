@@ -19,6 +19,6 @@ See examples directory
 
 
 ## TODOs
- - dereferencing
+ - optimize expanding by adding a temporary map of IDs
  - make CRUD complete
  - read all
