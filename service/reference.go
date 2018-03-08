@@ -86,7 +86,27 @@ func Derefence(repository Repository, reference, result interface{}) error {
 		for i := 0; i < t.NumField(); i++ {
 			fieldValue := v.MapIndex(reflect.ValueOf(t.Field(i).Name)).Elem()
 			if CanReference(t.Field(i).Type) {
-				//TODO implement
+				subReference, err := GetReference(t.Field(i).Type)
+				if err != nil {
+					return err
+				}
+
+				err = repository.Read(t.Field(i).Type.Name(), fieldValue.String(), &subReference)
+				if err != nil {
+					return err
+				}
+
+				subResult := reflect.New(t.Field(i).Type).Interface()
+				err = Derefence(repository, subReference, &subResult)
+				if err != nil {
+					return err
+				}
+
+				subResultValue := reflect.ValueOf(subResult)
+				if subResultValue.Kind() == reflect.Ptr {
+					subResultValue = subResultValue.Elem()
+				}
+				res.Field(i).Set(subResultValue)
 			} else {
 				fmt.Println("B0", t.Field(i).Type.Kind())
 				switch t.Field(i).Type.Kind() {
