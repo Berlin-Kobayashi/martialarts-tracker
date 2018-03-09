@@ -19,6 +19,8 @@ See examples directory
 
 
 ## TODOs
- - optimize expanding by adding a temporary map of IDs
  - make CRUD complete
  - read all
+ - extract service package to own package
+ - cover empty property reflection panic
+ - optimize expanding by adding a temporary map of IDs

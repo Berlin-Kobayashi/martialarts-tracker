@@ -81,8 +81,6 @@ func (s StorageService) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	default:
 		rw.WriteHeader(http.StatusMethodNotAllowed)
 	}
-
-	rw.WriteHeader(http.StatusNotFound)
 }
 
 func (s StorageService) get(rw http.ResponseWriter, r *http.Request, t reflect.Type, index string) {
