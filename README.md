@@ -24,3 +24,5 @@ See examples directory
  - extract service package to own package
  - cover empty property reflection panic
  - optimize expanding by adding a temporary map of IDs
+ - Test Mongo repository
+ - improve error handling in service to always respond with proper status codes

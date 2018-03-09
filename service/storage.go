@@ -78,6 +78,8 @@ func (s StorageService) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 	case http.MethodPost:
 		s.post(rw, r, t)
+	case http.MethodPut:
+		s.put(rw, r, t, index)
 	default:
 		rw.WriteHeader(http.StatusMethodNotAllowed)
 	}
@@ -150,21 +152,7 @@ func (s StorageService) expand(rw http.ResponseWriter, r *http.Request, t reflec
 }
 
 func (s StorageService) post(rw http.ResponseWriter, r *http.Request, t reflect.Type) {
-	content, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		fmt.Println(err)
-		rw.WriteHeader(http.StatusInternalServerError)
-	}
-
-	reference, err := GetReference(t)
-	if err != nil {
-		fmt.Println(err)
-		rw.WriteHeader(http.StatusInternalServerError)
-
-		return
-	}
-
-	err = json.Unmarshal(content, &reference)
+	reference, err := s.getReference(r, t)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusBadRequest)
@@ -192,6 +180,49 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request, t reflect.
 	}
 
 	err = s.repository.Save(t.Name(), reference)
+	if err != nil {
+		fmt.Println(err)
+		rw.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
+
+	rw.Write(response)
+}
+
+func (s StorageService) put(rw http.ResponseWriter, r *http.Request, t reflect.Type, index string) {
+	reference, err := s.getReference(r, t)
+	if err != nil {
+		fmt.Println(err)
+		rw.WriteHeader(http.StatusBadRequest)
+
+		return
+	}
+
+	if reference.(map[string]interface{})[idFieldName].(string) != index {
+		fmt.Printf("User provided id %q in path and %q in body\n", reference.(map[string]interface{})[idFieldName].(string), index)
+		rw.WriteHeader(http.StatusBadRequest)
+
+		return
+	}
+
+	err = AssertExistingReferences(s.repository, reference, t)
+	if err != nil {
+		fmt.Println(err)
+		rw.WriteHeader(http.StatusBadRequest)
+
+		return
+	}
+
+	response, err := json.Marshal(reference)
+	if err != nil {
+		fmt.Println(err)
+		rw.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
+
+	err = s.repository.Update(t.Name(), index, reference)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusInternalServerError)
@@ -238,4 +269,23 @@ func (s StorageService) getType(r *http.Request) (reflect.Type, error) {
 	}
 
 	return t, nil
+}
+
+func (s StorageService) getReference(r *http.Request, t reflect.Type) (interface{}, error) {
+	content, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	reference, err := GetReference(t)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(content, &reference)
+	if err != nil {
+		return nil, err
+	}
+
+	return reference, nil
 }

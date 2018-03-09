@@ -131,8 +131,8 @@ func TestStorageService_ServeHTTPPOST(t *testing.T) {
 		"Data": deeplyNestedDataValueFixture,
 	}
 
-	if !reflect.DeepEqual(recordedData, expected) {
-		t.Errorf("Does not save expected data. Actual %v Expected %v", recordedData, deeplyNestedIndexedDataFixture)
+	if !reflect.DeepEqual(savedData, expected) {
+		t.Errorf("Does not save expected data. Actual %v Expected %v", savedData, deeplyNestedIndexedDataFixture)
 	}
 
 	content, err := ioutil.ReadAll(w.Result().Body)
@@ -176,6 +176,51 @@ func TestStorageService_ServeHTTPPOSTTUnknownEntity(t *testing.T) {
 
 	if w.Result().StatusCode != http.StatusNotFound {
 		t.Errorf("Does not return proper status for unkown entity. expected data Actual %v Expected %v", w.Result().StatusCode, http.StatusMethodNotAllowed)
+	}
+}
+
+func TestStorageService_ServeHTTPPUT(t *testing.T) {
+	req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/%s/%s", entityName, deeplyNestedIDFixture), bytes.NewReader([]byte(getDataFixtureJSON(t))))
+	w := httptest.NewRecorder()
+	storageService.ServeHTTP(w, req)
+
+	expected := map[string]interface{}{
+		"ID":   deeplyNestedIDFixture,
+		"Data": deeplyNestedDataValueFixture,
+	}
+
+	if !reflect.DeepEqual(updatedData, expected) {
+		t.Errorf("Does not save expected data. Actual %v Expected %v", updatedData, deeplyNestedIndexedDataFixture)
+	}
+
+	content, err := ioutil.ReadAll(w.Result().Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	response := map[string]interface{}{}
+	err = json.Unmarshal(content, &response)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(response, expected) {
+		t.Errorf("Does not produce expected response. Actual %q Expected %q", response, expected)
+	}
+}
+
+func TestStorageService_ServeHTTPPUTNotMatchingIDs(t *testing.T) {
+	fixture := deeplyNestedIndexedDataFixture
+	fixture.ID = "123"
+	fixtureJSON, err := json.Marshal(fixture)
+	if err != nil {
+		t.Errorf("Could not create data fixture.")
+	}
+
+	req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/%s/%s", entityName, deeplyNestedIDFixture), bytes.NewReader(fixtureJSON))
+	w := httptest.NewRecorder()
+	storageService.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusBadRequest {
+		t.Errorf("Does not return proper status for not matching IDs. expected data Actual %v Expected %v", w.Result().StatusCode, http.StatusBadRequest)
 	}
 }
 

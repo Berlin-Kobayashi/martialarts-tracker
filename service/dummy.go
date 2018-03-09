@@ -11,13 +11,15 @@ func (g dummyUUIDGenerator) Generate() string {
 	return uuidV4Fixture
 }
 
-var recordedData interface{}
+var savedData interface{}
+
+var updatedData interface{}
 
 type dummyRepository struct {
 }
 
 func (s dummyRepository) Save(collectionName string, data interface{}) error {
-	recordedData = data
+	savedData = data
 
 	return nil
 }
@@ -39,9 +41,9 @@ func (s dummyRepository) Read(collectionName string, id string, result *interfac
 		}
 	case nestedIDFixture:
 		*result = map[string]interface{}{
-			"ID":                       nestedIDFixture,
-			"Data":                     nestedIndexedDataValueFixture,
-			"DeeplyNestedIndexedData" : deeplyNestedIDFixture,
+			"ID":                      nestedIDFixture,
+			"Data":                    nestedIndexedDataValueFixture,
+			"DeeplyNestedIndexedData": deeplyNestedIDFixture,
 		}
 	case deeplyNestedIDFixture:
 		*result = map[string]interface{}{
@@ -51,6 +53,12 @@ func (s dummyRepository) Read(collectionName string, id string, result *interfac
 	default:
 		return storage.NotFound
 	}
+
+	return nil
+}
+
+func (s dummyRepository) Update(collectionName string, id string, data interface{}) error {
+	updatedData = data
 
 	return nil
 }

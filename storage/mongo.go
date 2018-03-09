@@ -32,7 +32,7 @@ func (s MongoRepository) Save(collectionName string, data interface{}) error {
 	return nil
 }
 
-func (s MongoRepository) Read(collectionName string, id string, result *interface{}) error {
+func (s MongoRepository) Read(collectionName, id string, result *interface{}) error {
 	query := s.database.C(collectionName).Find(bson.M{"_id": id})
 
 	n, err := query.Count()
@@ -51,6 +51,18 @@ func (s MongoRepository) Read(collectionName string, id string, result *interfac
 
 	(*result).(bson.M)["ID"] = (*result).(bson.M)["_id"]
 	delete((*result).(bson.M), "_id")
+
+	return nil
+}
+
+func (s MongoRepository) Update(collectionName, id string, data interface{}) error {
+	data.(map[string]interface{})["_id"] = data.(map[string]interface{})["ID"]
+	delete(data.(map[string]interface{}), "ID")
+
+	err := s.database.C(collectionName).Update(bson.M{"_id": id}, data)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
