@@ -6,38 +6,54 @@ import (
 	"fmt"
 	"encoding/json"
 	"regexp"
-	"github.com/DanShu93/martialarts-tracker/storage"
+	"reflect"
 )
 
-type EntityDefinitions map[string]EntityDefinition
+const ActionExpand = "expand"
 
-type EntityDefinition struct {
-	Entity     interface{}
-	Repository Repository
+var entityNameRegex = regexp.MustCompile("^/([^/]+)/.*$")
+var indexRegex = regexp.MustCompile("^.*/([^/]+)$")
+var actionRegex = regexp.MustCompile("^/[^/]+/([^/]+)$")
+var indexedActionRegex = regexp.MustCompile("^/[^/]+/([^/]+)/[^/]+$")
+var indexedEntityNameRegex = regexp.MustCompile("^/([^/]+)$")
+
+var pathRegex = regexp.MustCompilePOSIX("^/[^/]+/?[^/]*/?[^/]*$")
+
+type EntityDefinitions map[string]reflect.Type
+
+func (e EntityDefinitions) validate() error {
+	for _, t := range e {
+		if !CanReference(t) {
+			return fmt.Errorf("all entities have to be referenceable by having an ID string field but %q does not", t.Name())
+		}
+	}
+
+	return nil
 }
 
 type StorageService struct {
-	EntityDefinitions EntityDefinitions
+	entityDefinitions EntityDefinitions
+	idGenerator       IDGenerator
+	repository        Repository
+}
+
+func NewStorageService(entityDefinitions EntityDefinitions, idGenerator IDGenerator, repository Repository) (StorageService, error) {
+	err := entityDefinitions.validate()
+	if err != nil {
+		return StorageService{}, err
+	}
+
+	return StorageService{
+		entityDefinitions: entityDefinitions,
+		idGenerator:       idGenerator,
+		repository:        repository,
+	}, nil
 }
 
 func (s StorageService) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		s.get(rw, r)
-	case http.MethodPost:
-		s.post(rw, r)
-	default:
-		rw.WriteHeader(http.StatusMethodNotAllowed)
-	}
-}
-
-func (s StorageService) get(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Add("Content-Type", "application/json")
 
-	indexRegex := regexp.MustCompile("^.*/([^/]+)$")
-	index := string(indexRegex.ReplaceAll([]byte(r.URL.Path), []byte("$1")))
-
-	entityDefinition, err := s.detectEntityDefinition(r)
+	t, err := s.getType(r)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusNotFound)
@@ -45,24 +61,46 @@ func (s StorageService) get(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	entity := entityDefinition.Entity
-	err = entityDefinition.Repository.Read(index, entity)
+	if !pathRegex.Match([]byte(r.URL.Path)) {
+		rw.WriteHeader(http.StatusNotFound)
+	}
 
+	index := s.getIndex(r)
+	action := s.getAction(r)
+
+	switch r.Method {
+	case http.MethodGet:
+		switch action {
+		case ActionExpand:
+			s.expand(rw, r, t, index)
+		default:
+			s.get(rw, r, t, index)
+		}
+	case http.MethodPost:
+		s.post(rw, r, t)
+	default:
+		rw.WriteHeader(http.StatusMethodNotAllowed)
+	}
+}
+
+func (s StorageService) get(rw http.ResponseWriter, r *http.Request, t reflect.Type, index string) {
+	reference, err := GetReference(t)
 	if err != nil {
 		fmt.Println(err)
-		switch err {
-		case storage.NotFound:
-			rw.WriteHeader(http.StatusNotFound)
-		case storage.Invalid:
-			rw.WriteHeader(http.StatusInternalServerError)
-		default:
-			rw.WriteHeader(http.StatusInternalServerError)
-		}
+		rw.WriteHeader(http.StatusInternalServerError)
 
 		return
 	}
 
-	response, err := json.Marshal(entity)
+	err = s.repository.Read(t.Name(), index, &reference)
+	if err != nil {
+		fmt.Println(err)
+		rw.WriteHeader(http.StatusNotFound)
+
+		return
+	}
+
+	response, err := json.Marshal(reference)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusInternalServerError)
@@ -73,16 +111,18 @@ func (s StorageService) get(rw http.ResponseWriter, r *http.Request) {
 	rw.Write(response)
 }
 
-func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
-	rw.Header().Add("Content-Type", "application/json")
+func (s StorageService) expand(rw http.ResponseWriter, r *http.Request, t reflect.Type, index string) {
+	result := reflect.New(t).Interface()
 
-	content, err := ioutil.ReadAll(r.Body)
+	reference, err := GetReference(t)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusInternalServerError)
+
+		return
 	}
 
-	entityDefinition, err := s.detectEntityDefinition(r)
+	err = s.repository.Read(t.Name(), index, &reference)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusNotFound)
@@ -90,8 +130,41 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	entity := entityDefinition.Entity
-	err = json.Unmarshal(content, entity)
+	err = Derefence(s.repository, reference, &result)
+	if err != nil {
+		fmt.Println(err)
+		rw.WriteHeader(http.StatusNotFound)
+
+		return
+	}
+
+	response, err := json.Marshal(result)
+	if err != nil {
+		fmt.Println(err)
+		rw.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
+
+	rw.Write(response)
+}
+
+func (s StorageService) post(rw http.ResponseWriter, r *http.Request, t reflect.Type) {
+	content, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		fmt.Println(err)
+		rw.WriteHeader(http.StatusInternalServerError)
+	}
+
+	reference, err := GetReference(t)
+	if err != nil {
+		fmt.Println(err)
+		rw.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
+
+	err = json.Unmarshal(content, &reference)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusBadRequest)
@@ -99,21 +172,26 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	entity = entityDefinition.Entity
-	err = entityDefinition.Repository.Save(entity)
+	id := s.idGenerator.Generate()
+	reference.(map[string]interface{})[idFieldName] = id
+
+	err = AssertExistingReferences(s.repository, reference, t)
 	if err != nil {
 		fmt.Println(err)
-		switch err {
-		case UnsupportedMethod:
-			rw.WriteHeader(http.StatusMethodNotAllowed)
-		default:
-			rw.WriteHeader(http.StatusInternalServerError)
-		}
+		rw.WriteHeader(http.StatusBadRequest)
 
 		return
 	}
 
-	response, err := json.Marshal(entity)
+	response, err := json.Marshal(reference)
+	if err != nil {
+		fmt.Println(err)
+		rw.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
+
+	err = s.repository.Save(t.Name(), reference)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusInternalServerError)
@@ -124,19 +202,40 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request) {
 	rw.Write(response)
 }
 
-func (s StorageService) detectEntityDefinition(r *http.Request) (EntityDefinition, error) {
-	entityNameRegex := regexp.MustCompile("^/(.*)/[^/]+$")
+func (s StorageService) getAction(r *http.Request) string {
+	regex := actionRegex
 
-	if !entityNameRegex.Match([]byte(r.URL.Path)) {
-		entityNameRegex = regexp.MustCompile("^/(.*)$")
+	if !regex.Match([]byte(r.URL.Path)) {
+		regex = indexedActionRegex
+	}
+	if !regex.Match([]byte(r.URL.Path)) {
+		return ""
 	}
 
-	entityName := string(entityNameRegex.ReplaceAll([]byte(r.URL.Path), []byte("$1")))
+	return string(regex.ReplaceAll([]byte(r.URL.Path), []byte("$1")))
+}
 
-	entityType, ok := s.EntityDefinitions[entityName]
+func (s StorageService) getIndex(r *http.Request) string {
+	if !indexRegex.Match([]byte(r.URL.Path)) {
+		return ""
+	}
+
+	return string(indexRegex.ReplaceAll([]byte(r.URL.Path), []byte("$1")))
+}
+
+func (s StorageService) getType(r *http.Request) (reflect.Type, error) {
+	regex := entityNameRegex
+
+	if !regex.Match([]byte(r.URL.Path)) {
+		regex = indexedEntityNameRegex
+	}
+
+	entityName := string(regex.ReplaceAll([]byte(r.URL.Path), []byte("$1")))
+
+	t, ok := s.entityDefinitions[entityName]
 	if !ok {
-		return EntityDefinition{}, fmt.Errorf("entity %s is not defined", entityName)
+		return nil, fmt.Errorf("entity %s is not defined", entityName)
 	}
 
-	return entityType, nil
+	return t, nil
 }

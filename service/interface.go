@@ -1,10 +1,10 @@
 package service
 
 type Repository interface {
-	Save(data interface{}) error
-	Read(id string, result interface{}) error
+	Save(collectionName string, data interface{}) error
+	Read(collectionName string, id string, result *interface{}) error
 }
 
-type UUIDGenerator interface {
+type IDGenerator interface {
 	Generate() string
 }

@@ -4,7 +4,6 @@ import (
 	"testing"
 	"net/http/httptest"
 	"io/ioutil"
-	"github.com/DanShu93/martialarts-tracker/entity"
 	"fmt"
 	"encoding/json"
 	"bytes"
@@ -12,52 +11,141 @@ import (
 	"net/http"
 )
 
-var entityName = "training-unit"
+var entityName = "data"
 
-var storageService = StorageService{
-	EntityDefinitions: EntityDefinitions{
-		entityName: {
-			Entity:     &entity.TrainingUnit{},
-			Repository: dummyRepository{},
+var storageService = createStorageService()
+
+func TestNewStorageService(t *testing.T) {
+	expected := StorageService{
+		entityDefinitions: EntityDefinitions{
+			entityName: reflect.TypeOf(deeplyNestedIndexedData{}),
 		},
-	},
+		repository:  dummyRepository{},
+		idGenerator: dummyUUIDGenerator{},
+	}
+
+	if !reflect.DeepEqual(storageService, expected) {
+		t.Errorf("Does not return expected result. Actual %s Expected %s", storageService, expected)
+	}
+}
+
+func TestNewStorageServiceWrongEntityType(t *testing.T) {
+	_, err := NewStorageService(
+		EntityDefinitions{
+			entityName: reflect.TypeOf(1),
+		},
+		dummyUUIDGenerator{},
+		dummyRepository{},
+	)
+
+	if err == nil {
+		t.Error("Expected error")
+	}
+}
+
+func TestNewStorageServiceNoIDEntity(t *testing.T) {
+	_, err := NewStorageService(
+		EntityDefinitions{
+			entityName: reflect.TypeOf(struct{}{}),
+		},
+		dummyUUIDGenerator{},
+		dummyRepository{},
+	)
+
+	if err == nil {
+		t.Error("Expected error")
+	}
+}
+
+func TestNewStorageServiceWrongIDTypeEntity(t *testing.T) {
+	_, err := NewStorageService(
+		EntityDefinitions{
+			entityName: reflect.TypeOf(struct{ ID int }{}),
+		},
+		dummyUUIDGenerator{},
+		dummyRepository{},
+	)
+
+	if err == nil {
+		t.Error("Expected error")
+	}
 }
 
 func TestStorageService_ServeHTTPGET(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s/%s", entityName, trainingUnitFixture.ID), nil)
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s/%s", entityName, deeplyNestedIDFixture), nil)
 	w := httptest.NewRecorder()
 	storageService.ServeHTTP(w, req)
 
-	expectedBody := getTrainingUnitFixtureJSON(t)
+	expected := map[string]interface{}{
+		"ID":   deeplyNestedIDFixture,
+		"Data": deeplyNestedDataValueFixture,
+	}
 
 	content, err := ioutil.ReadAll(w.Result().Body)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if string(content) != expectedBody {
-		t.Errorf("Does not produce expected response. Actual %q Expected %q", content, expectedBody)
+	response := map[string]interface{}{}
+	err = json.Unmarshal(content, &response)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(response, expected) {
+		t.Errorf("Does not produce expected response. Actual %q Expected %q", response, expected)
+	}
+}
+
+func TestStorageService_ServeHTTPGETExpand(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s/%s/%s", entityName, ActionExpand, deeplyNestedIDFixture), nil)
+	w := httptest.NewRecorder()
+	storageService.ServeHTTP(w, req)
+
+	expected := map[string]interface{}{
+		"ID":   deeplyNestedIDFixture,
+		"Data": deeplyNestedDataValueFixture,
+	}
+
+	content, err := ioutil.ReadAll(w.Result().Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	response := map[string]interface{}{}
+	err = json.Unmarshal(content, &response)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(response, expected) {
+		t.Errorf("Does not produce expected response. Actual %q Expected %q", response, expected)
 	}
 }
 
 func TestStorageService_ServeHTTPPOST(t *testing.T) {
-	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%s", entityName), bytes.NewReader([]byte(getTrainingUnitFixtureJSON(t))))
+	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%s", entityName), bytes.NewReader([]byte(getDataFixtureJSON(t))))
 	w := httptest.NewRecorder()
 	storageService.ServeHTTP(w, req)
 
-	if !reflect.DeepEqual(recordedData, &trainingUnitFixture) {
-		t.Errorf("Does not save expected data. Actual %v Expected %v", recordedData, trainingUnitFixture)
+	expected := map[string]interface{}{
+		"ID":   uuidV4Fixture,
+		"Data": deeplyNestedDataValueFixture,
 	}
 
-	expectedBody := getTrainingUnitFixtureJSON(t)
+	if !reflect.DeepEqual(recordedData, expected) {
+		t.Errorf("Does not save expected data. Actual %v Expected %v", recordedData, deeplyNestedIndexedDataFixture)
+	}
 
 	content, err := ioutil.ReadAll(w.Result().Body)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	if string(content) != expectedBody {
-		t.Errorf("Does not produce expected response. Actual %q Expected %q", content, expectedBody)
+	response := map[string]interface{}{}
+	err = json.Unmarshal(content, &response)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(response, expected) {
+		t.Errorf("Does not produce expected response. Actual %q Expected %q", response, expected)
 	}
 }
 
@@ -72,7 +160,7 @@ func TestStorageService_ServeHTTPUnknownMethod(t *testing.T) {
 }
 
 func TestStorageService_ServeHTTPGETUnknownEntity(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/unknown/%s", trainingUnitFixture.ID), nil)
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/unknown/%s", deeplyNestedIDFixture), nil)
 	w := httptest.NewRecorder()
 	storageService.ServeHTTP(w, req)
 
@@ -82,7 +170,7 @@ func TestStorageService_ServeHTTPGETUnknownEntity(t *testing.T) {
 }
 
 func TestStorageService_ServeHTTPPOSTTUnknownEntity(t *testing.T) {
-	req := httptest.NewRequest(http.MethodPost, "/unknown", bytes.NewReader([]byte(getTrainingUnitFixtureJSON(t))))
+	req := httptest.NewRequest(http.MethodPost, "/unknown", bytes.NewReader([]byte(getDataFixtureJSON(t))))
 	w := httptest.NewRecorder()
 	storageService.ServeHTTP(w, req)
 
@@ -91,11 +179,27 @@ func TestStorageService_ServeHTTPPOSTTUnknownEntity(t *testing.T) {
 	}
 }
 
-func getTrainingUnitFixtureJSON(t *testing.T) string {
-	fixtureJSON, err := json.Marshal(trainingUnitFixture)
+func createStorageService() StorageService {
+	storageService, err := NewStorageService(
+		EntityDefinitions{
+			entityName: reflect.TypeOf(deeplyNestedIndexedData{}),
+		},
+		dummyUUIDGenerator{},
+		dummyRepository{},
+	)
 
 	if err != nil {
-		t.Errorf("Could not create training unit fixture.")
+		panic(err)
+	}
+
+	return storageService
+}
+
+func getDataFixtureJSON(t *testing.T) string {
+	fixtureJSON, err := json.Marshal(deeplyNestedIndexedDataFixture)
+
+	if err != nil {
+		t.Errorf("Could not create data fixture.")
 	}
 
 	return string(fixtureJSON)

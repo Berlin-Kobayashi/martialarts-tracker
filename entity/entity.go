@@ -1,34 +1,32 @@
 package entity
 
-import "time"
-
 type TrainingUnit struct {
-	ID         string `bson:"_id"`
-	Start      time.Time
-	End        time.Time
+	ID         string
+	Start      string
+	End        string
 	Series     string
-	Techniques []string
-	Methods    []string
-	Exercises  []string
+	Techniques []Technique
+	Methods    []Method
+	Exercises  []Exercise
 }
 
 type Technique struct {
-	ID          string `bson:"_id"`
+	ID          string
 	Kind        string
 	Name        string
 	Description string
 }
 
 type Method struct {
-	ID          string `bson:"_id"`
+	ID          string
 	Kind        string
 	Name        string
 	Description string
-	Covers      []string
+	Covers      []Technique
 }
 
 type Exercise struct {
-	ID          string `bson:"_id"`
+	ID          string
 	Kind        string
 	Name        string
 	Description string

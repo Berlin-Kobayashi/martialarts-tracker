@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/DanShu93/martialarts-tracker/entity"
+	"github.com/DanShu93/martialarts-tracker/storage"
 )
 
 type dummyUUIDGenerator struct {
@@ -16,18 +16,40 @@ var recordedData interface{}
 type dummyRepository struct {
 }
 
-func (s dummyRepository) Save(data interface{}) error {
+func (s dummyRepository) Save(collectionName string, data interface{}) error {
 	recordedData = data
 
 	return nil
 }
 
-func (s dummyRepository) Read(id string, result interface{}) error {
-	switch resultPtr := result.(type) {
-	case *entity.TrainingUnit:
-		*resultPtr = trainingUnitFixture
+func (s dummyRepository) Read(collectionName string, id string, result *interface{}) error {
+	switch id {
+	case idFixture:
+		*result = map[string]interface{}{
+			"ID":   idFixture,
+			"Data": dataValueFixture,
+			"NestedData": map[string]interface{}{
+				"Data":                    nestedDataValueFixture,
+				"DeeplyNestedIndexedData": deeplyNestedIDFixture,
+			},
+			"NestedIndexedData": nestedIDFixture,
+			"MappedIndexedData": map[string]string{mapIndexFixture: deeplyNestedIDFixture},
+			"SlicedIndexedData": []string{deeplyNestedIDFixture},
+			"MappedData":        map[string]string{mapIndexFixture: dataValueFixture},
+		}
+	case nestedIDFixture:
+		*result = map[string]interface{}{
+			"ID":                       nestedIDFixture,
+			"Data":                     nestedIndexedDataValueFixture,
+			"DeeplyNestedIndexedData" : deeplyNestedIDFixture,
+		}
+	case deeplyNestedIDFixture:
+		*result = map[string]interface{}{
+			"ID":   deeplyNestedIDFixture,
+			"Data": deeplyNestedDataValueFixture,
+		}
 	default:
-		return UnsupportedEntity
+		return storage.NotFound
 	}
 
 	return nil

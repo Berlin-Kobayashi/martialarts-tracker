@@ -4,8 +4,9 @@ import (
 	"net/http"
 	"github.com/DanShu93/martialarts-tracker/storage"
 	"github.com/DanShu93/martialarts-tracker/service"
-	"github.com/DanShu93/martialarts-tracker/uuid"
 	"github.com/DanShu93/martialarts-tracker/entity"
+	"reflect"
+	"github.com/DanShu93/martialarts-tracker/uuid"
 )
 
 func main() {
@@ -23,96 +24,20 @@ func main() {
 }
 
 func build(mongoURL, mongoDB string) (service.StorageService, error) {
-	trainingUnitRepository, err := storage.NewMongoRepository(
+	repository, err := storage.NewMongoRepository(
 		mongoURL,
 		mongoDB,
-		"training_units",
 	)
 	if err != nil {
 		return service.StorageService{}, err
 	}
-
-	techniqueRepository, err := storage.NewMongoRepository(
-		mongoURL,
-		mongoDB,
-		"techniques",
-	)
-	if err != nil {
-		return service.StorageService{}, err
-	}
-
-	methodRepository, err := storage.NewMongoRepository(
-		mongoURL,
-		mongoDB,
-		"methods",
-	)
-	if err != nil {
-		return service.StorageService{}, err
-	}
-
-	exerciseRepository, err := storage.NewMongoRepository(
-		mongoURL,
-		mongoDB,
-		"exercises",
-	)
-	if err != nil {
-		return service.StorageService{}, err
-	}
-
-	expandedMethodRepository := service.ExpandedMethodRepository{
-		TechniqueRepository: techniqueRepository,
-		MethodRepository:    methodRepository,
-	}
-
-	expandedTrainingUnitRepository := service.ExpandedTrainingUnitRepository{
-		TrainingUnitRepository:   trainingUnitRepository,
-		TechniqueRepository:      techniqueRepository,
-		ExerciseRepository:       exerciseRepository,
-		ExpandedMethodRepository: expandedMethodRepository,
-	}
-
-	uuidGenerator := uuid.V4{}
 
 	entityDefinitions := service.EntityDefinitions{
-		"training-unit": {
-			Entity: &entity.TrainingUnit{},
-			Repository: service.IndexingRepository{
-				Repository: trainingUnitRepository,
-				Generator:  uuidGenerator,
-			},
-		},
-		"technique": {
-			Entity: &entity.Technique{},
-			Repository: service.IndexingRepository{
-				Repository: techniqueRepository,
-				Generator:  uuidGenerator,
-			},
-		},
-		"method": {
-			Entity: &entity.Method{},
-			Repository: service.IndexingRepository{
-				Repository: methodRepository,
-				Generator:  uuidGenerator,
-			},
-		},
-		"exercise": {
-			Entity: &entity.Exercise{},
-			Repository: service.IndexingRepository{
-				Repository: exerciseRepository,
-				Generator:  uuidGenerator,
-			},
-		},
-		"training-unit/expand": {
-			Entity:     &service.ExpandedTrainingUnit{},
-			Repository: expandedTrainingUnitRepository,
-		},
-		"method/expand": {
-			Entity:     &service.ExpandedMethod{},
-			Repository: expandedMethodRepository,
-		},
+		"training-unit": reflect.TypeOf(entity.TrainingUnit{}),
+		"technique":     reflect.TypeOf(entity.Technique{}),
+		"method":        reflect.TypeOf(entity.Method{}),
+		"exercise":      reflect.TypeOf(entity.Exercise{}),
 	}
 
-	return service.StorageService{
-		EntityDefinitions: entityDefinitions,
-	}, nil
+	return service.NewStorageService(entityDefinitions, uuid.V4{}, repository)
 }
