@@ -239,10 +239,10 @@ func TestStorageService_ServeHTTPDELETE(t *testing.T) {
 	w := httptest.NewRecorder()
 	storageService.ServeHTTP(w, req)
 
-	expected := []string{"deeplyNestedIDFixture"}
+	expected := []string{deeplyNestedIDFixture}
 
 	if !reflect.DeepEqual(deletedData, expected) {
-		t.Errorf("Does not delete expected data. Actual %v Expected %v", deletedData, deeplyNestedIndexedDataFixture)
+		t.Errorf("Does not delete expected data. Actual %v Expected %v", deletedData, expected)
 	}
 
 	if w.Result().StatusCode != http.StatusOK {
@@ -257,14 +257,8 @@ func TestStorageService_ServeHTTPDELETEUnknownResource(t *testing.T) {
 	w := httptest.NewRecorder()
 	storageService.ServeHTTP(w, req)
 
-	expected := []string{"123"}
-
-	if !reflect.DeepEqual(deletedData, expected) {
-		t.Errorf("Does not try to delete expected data. Actual %v Expected %v", deletedData, deeplyNestedIndexedDataFixture)
-	}
-
-	if w.Result().StatusCode != http.StatusBadRequest {
-		t.Errorf("Does not return proper status. expected data Actual %v Expected %v", w.Result().StatusCode, http.StatusBadRequest)
+	if w.Result().StatusCode != http.StatusNotFound {
+		t.Errorf("Does not return proper status. expected data Actual %v Expected %v", w.Result().StatusCode, http.StatusNotFound)
 	}
 
 	deletedData = []string{}

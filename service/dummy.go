@@ -62,3 +62,14 @@ func (s dummyRepository) Update(collectionName string, id string, data interface
 
 	return nil
 }
+
+func (s dummyRepository) Delete(collectionName string, id string) error {
+	switch id {
+	case idFixture, nestedIDFixture, deeplyNestedIDFixture:
+		deletedData = append(deletedData, id)
+
+		return nil
+	}
+
+	return storage.NotFound
+}

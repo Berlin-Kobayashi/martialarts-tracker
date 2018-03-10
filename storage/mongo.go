@@ -66,3 +66,12 @@ func (s MongoRepository) Update(collectionName, id string, data interface{}) err
 
 	return nil
 }
+
+func (s MongoRepository) Delete(collectionName, id string) error {
+	err := s.database.C(collectionName).Remove(bson.M{"_id": id})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

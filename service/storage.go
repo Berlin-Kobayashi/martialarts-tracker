@@ -80,6 +80,8 @@ func (s StorageService) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		s.post(rw, r, t)
 	case http.MethodPut:
 		s.put(rw, r, t, index)
+	case http.MethodDelete:
+		s.delete(rw, r, t, index)
 	default:
 		rw.WriteHeader(http.StatusMethodNotAllowed)
 	}
@@ -231,6 +233,16 @@ func (s StorageService) put(rw http.ResponseWriter, r *http.Request, t reflect.T
 	}
 
 	rw.Write(response)
+}
+
+func (s StorageService) delete(rw http.ResponseWriter, r *http.Request, t reflect.Type, index string) {
+	err := s.repository.Delete(t.Name(), index)
+	if err != nil {
+		fmt.Println(err)
+		rw.WriteHeader(http.StatusNotFound)
+
+		return
+	}
 }
 
 func (s StorageService) getAction(r *http.Request) string {
