@@ -12,13 +12,13 @@ func (g dummyUUIDGenerator) Generate() string {
 }
 
 var savedData interface{}
-
 var updatedData interface{}
+var deletedData []string
 
 type dummyRepository struct {
 }
 
-func (s dummyRepository) Save(collectionName string, data interface{}) error {
+func (s dummyRepository) Create(collectionName string, data interface{}) error {
 	savedData = data
 
 	return nil

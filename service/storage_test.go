@@ -190,7 +190,7 @@ func TestStorageService_ServeHTTPPUT(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(updatedData, expected) {
-		t.Errorf("Does not save expected data. Actual %v Expected %v", updatedData, deeplyNestedIndexedDataFixture)
+		t.Errorf("Does not update expected data. Actual %v Expected %v", updatedData, deeplyNestedIndexedDataFixture)
 	}
 
 	content, err := ioutil.ReadAll(w.Result().Body)
@@ -232,6 +232,42 @@ func TestStorageService_ServeHTTPPUTNotMatchingIDs(t *testing.T) {
 	if w.Result().StatusCode != http.StatusBadRequest {
 		t.Errorf("Does not return proper status. expected data Actual %v Expected %v", w.Result().StatusCode, http.StatusBadRequest)
 	}
+}
+
+func TestStorageService_ServeHTTPDELETE(t *testing.T) {
+	req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/%s/%s", entityName, deeplyNestedIDFixture), bytes.NewReader([]byte(getDataFixtureJSON(t))))
+	w := httptest.NewRecorder()
+	storageService.ServeHTTP(w, req)
+
+	expected := []string{"deeplyNestedIDFixture"}
+
+	if !reflect.DeepEqual(deletedData, expected) {
+		t.Errorf("Does not delete expected data. Actual %v Expected %v", deletedData, deeplyNestedIndexedDataFixture)
+	}
+
+	if w.Result().StatusCode != http.StatusOK {
+		t.Errorf("Does not return proper status. expected data Actual %v Expected %v", w.Result().StatusCode, http.StatusOK)
+	}
+
+	deletedData = []string{}
+}
+
+func TestStorageService_ServeHTTPDELETEUnknownResource(t *testing.T) {
+	req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/%s/%s", entityName, "123"), bytes.NewReader([]byte(getDataFixtureJSON(t))))
+	w := httptest.NewRecorder()
+	storageService.ServeHTTP(w, req)
+
+	expected := []string{"123"}
+
+	if !reflect.DeepEqual(deletedData, expected) {
+		t.Errorf("Does not try to delete expected data. Actual %v Expected %v", deletedData, deeplyNestedIndexedDataFixture)
+	}
+
+	if w.Result().StatusCode != http.StatusBadRequest {
+		t.Errorf("Does not return proper status. expected data Actual %v Expected %v", w.Result().StatusCode, http.StatusBadRequest)
+	}
+
+	deletedData = []string{}
 }
 
 func createStorageService() StorageService {

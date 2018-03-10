@@ -179,7 +179,7 @@ func (s StorageService) post(rw http.ResponseWriter, r *http.Request, t reflect.
 		return
 	}
 
-	err = s.repository.Save(t.Name(), reference)
+	err = s.repository.Create(t.Name(), reference)
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusInternalServerError)
