@@ -19,7 +19,7 @@ See examples directory
 
 
 ## TODOs
- - make CRUD complete
+ - delete all references
  - read all
  - extract service package to own package
  - cover empty property reflection panic
