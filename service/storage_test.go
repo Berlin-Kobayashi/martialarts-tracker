@@ -207,6 +207,16 @@ func TestStorageService_ServeHTTPPUT(t *testing.T) {
 	}
 }
 
+func TestStorageService_ServeHTTPPUTUnknownResource(t *testing.T) {
+	req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/%s/%s", entityName, "123"), bytes.NewReader([]byte(getDataFixtureJSON(t))))
+	w := httptest.NewRecorder()
+	storageService.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusBadRequest {
+		t.Errorf("Does not return proper status. expected data Actual %v Expected %v", w.Result().StatusCode, http.StatusBadRequest)
+	}
+}
+
 func TestStorageService_ServeHTTPPUTNotMatchingIDs(t *testing.T) {
 	fixture := deeplyNestedIndexedDataFixture
 	fixture.ID = "123"
@@ -220,7 +230,7 @@ func TestStorageService_ServeHTTPPUTNotMatchingIDs(t *testing.T) {
 	storageService.ServeHTTP(w, req)
 
 	if w.Result().StatusCode != http.StatusBadRequest {
-		t.Errorf("Does not return proper status for not matching IDs. expected data Actual %v Expected %v", w.Result().StatusCode, http.StatusBadRequest)
+		t.Errorf("Does not return proper status. expected data Actual %v Expected %v", w.Result().StatusCode, http.StatusBadRequest)
 	}
 }
 
