@@ -35,9 +35,7 @@ func (s dummyRepository) Read(collectionName string, id string, result *interfac
 				"DeeplyNestedIndexedData": deeplyNestedIDFixture,
 			},
 			"NestedIndexedData": nestedIDFixture,
-			"MappedIndexedData": map[string]string{mapIndexFixture: deeplyNestedIDFixture},
 			"SlicedIndexedData": []string{deeplyNestedIDFixture},
-			"MappedData":        map[string]string{mapIndexFixture: dataValueFixture},
 		}
 	case nestedIDFixture:
 		*result = map[string]interface{}{

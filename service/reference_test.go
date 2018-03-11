@@ -17,7 +17,7 @@ func TestAssertExistingResource(t *testing.T) {
 
 func TestAssertExistingResourceForMissingReference(t *testing.T) {
 	input := createReferenceFixture()
-	input["MappedIndexedData"] = map[string]string{mapIndexFixture: "123"}
+	input["SlicedIndexedData"] = []string{"123"}
 	err := AssertExistingResource(dummyRepository{}, input, reflect.TypeOf(indexedData{}))
 
 	if err == nil {
@@ -46,9 +46,7 @@ func TestGetReference(t *testing.T) {
 			"DeeplyNestedIndexedData": reflect.New(reflect.TypeOf("")).Interface(),
 		},
 		"NestedIndexedData": reflect.New(reflect.TypeOf("")).Interface(),
-		"MappedIndexedData": reflect.New(reflect.TypeOf(map[string]string{})).Interface(),
 		"SlicedIndexedData": reflect.New(reflect.TypeOf([]string{})).Interface(),
-		"MappedData":        reflect.New(reflect.MapOf(reflect.TypeOf(""), reflect.TypeOf(reflect.New(reflect.TypeOf("")).Interface()))).Interface(),
 	}
 
 	actual, err := GetReference(input)
@@ -62,6 +60,16 @@ func TestGetReference(t *testing.T) {
 	}
 }
 
+func TestGetReferenceUnsupportedFieldType(t *testing.T) {
+	input := reflect.TypeOf(unsupportedFieldMap{})
+
+	_, err := GetReference(input)
+
+	if err == nil {
+		t.Error("Expected error")
+	}
+}
+
 func createReferenceFixture() map[string]interface{} {
 	return map[string]interface{}{
 		"ID":   idFixture,
@@ -71,9 +79,7 @@ func createReferenceFixture() map[string]interface{} {
 			"DeeplyNestedIndexedData": deeplyNestedIDFixture,
 		},
 		"NestedIndexedData": nestedIDFixture,
-		"MappedIndexedData": map[string]string{mapIndexFixture: deeplyNestedIDFixture},
 		"SlicedIndexedData": []string{deeplyNestedIDFixture},
-		"MappedData":        map[string]string{mapIndexFixture: dataValueFixture},
 	}
 }
 

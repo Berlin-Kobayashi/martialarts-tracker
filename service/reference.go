@@ -2,6 +2,7 @@ package service
 
 import (
 	"reflect"
+	"fmt"
 )
 
 const idFieldName = "ID"
@@ -33,21 +34,7 @@ func GetReference(t reflect.Type) (interface{}, error) {
 
 		return result, nil
 	case reflect.Map:
-		property := t.Elem()
-		if property.Kind() == reflect.Struct {
-			if CanReference(property) {
-				return reflect.New(reflect.TypeOf(map[string]string{})).Interface(), nil
-			} else {
-				return GetReference(property)
-			}
-		} else {
-			referencingEntity, err := GetReference(property)
-			if err != nil {
-				return nil, err
-			}
-
-			return reflect.New(reflect.MapOf(t.Key(), reflect.TypeOf(referencingEntity))).Interface(), nil
-		}
+		return nil, fmt.Errorf("unsupported field type %q", t.Kind())
 	case reflect.Slice:
 		property := t.Elem()
 		if property.Kind() == reflect.Struct {
@@ -107,15 +94,11 @@ func Derefence(repository Repository, reference, result interface{}) error {
 				res.Field(i).Set(subResultValue)
 			} else {
 				switch t.Field(i).Type.Kind() {
-				case reflect.Struct, reflect.Map, reflect.Slice:
+				case reflect.Struct, reflect.Slice:
 					subResult := reflect.New(t.Field(i).Type).Interface()
-					switch t.Field(i).Type.Kind() {
-					case reflect.Map:
-						subResult = reflect.MakeMap(t.Field(i).Type).Interface()
-					case reflect.Slice:
+					if t.Field(i).Type.Kind() == reflect.Slice {
 						subResult = reflect.MakeSlice(t.Field(i).Type, fieldValue.Len(), fieldValue.Cap()).Interface()
 					}
-
 					err := Derefence(repository, fieldValue.Interface(), &subResult)
 					if err != nil {
 						return err
@@ -132,35 +115,6 @@ func Derefence(repository Repository, reference, result interface{}) error {
 			}
 		}
 		return nil
-	case reflect.Map:
-		for _, k := range v.MapKeys() {
-			fieldValue := v.MapIndex(k)
-			if CanReference(t.Elem()) {
-				subReference, err := GetReference(t.Elem())
-				if err != nil {
-					return err
-				}
-
-				err = repository.Read(t.Elem().Name(), fieldValue.Interface().(string), &subReference)
-				if err != nil {
-					return err
-				}
-
-				subResult := reflect.New(t.Elem()).Interface()
-				err = Derefence(repository, subReference, &subResult)
-				if err != nil {
-					return err
-				}
-
-				subResultValue := reflect.ValueOf(subResult)
-				if subResultValue.Kind() == reflect.Ptr {
-					subResultValue = subResultValue.Elem()
-				}
-				res.SetMapIndex(k, subResultValue)
-			} else {
-				res.SetMapIndex(k, fieldValue)
-			}
-		}
 	case reflect.Slice:
 		for i := 0; i < v.Len(); i++ {
 			fieldValue := v.Index(i)
@@ -233,13 +187,6 @@ func assertExistingResourceRecursively(repository Repository, reference interfac
 		}
 
 		return nil
-	case reflect.Map:
-		for _, k := range v.MapKeys() {
-			err := assertExistingResourceRecursively(repository, v.MapIndex(k).Interface(), t.Elem(), true)
-			if err != nil {
-				return err
-			}
-		}
 	case reflect.Slice:
 		for i := 0; i < v.Len(); i++ {
 			err := assertExistingResourceRecursively(repository, v.Index(i).Interface(), t.Elem(), true)
