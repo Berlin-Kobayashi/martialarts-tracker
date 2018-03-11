@@ -19,6 +19,7 @@ See examples directory
 
 
 ## TODOs
+ - add dummy tests
  - get referenced by
  - delete all references
  - read all
