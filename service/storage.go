@@ -10,6 +10,7 @@ import (
 )
 
 const ActionExpand = "expand"
+const ActionReferencedBy = "referenced-by"
 
 var entityNameRegex = regexp.MustCompile("^/([^/]+)/.*$")
 var indexRegex = regexp.MustCompile("^.*/([^/]+)$")

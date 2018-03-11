@@ -2,6 +2,8 @@ package service
 
 import (
 	"github.com/DanShu93/martialarts-tracker/storage"
+	"github.com/DanShu93/martialarts-tracker/query"
+	"reflect"
 )
 
 type dummyUUIDGenerator struct {
@@ -14,6 +16,7 @@ func (g dummyUUIDGenerator) Generate() string {
 var savedData interface{}
 var updatedData interface{}
 var deletedData []string
+var queriedData query.Query
 
 type dummyRepository struct {
 }
@@ -70,4 +73,21 @@ func (s dummyRepository) Delete(collectionName string, id string) error {
 	}
 
 	return storage.NotFound
+}
+
+func (s dummyRepository) ReadAll(collectionName string, query query.Query, result interface{}) error {
+	queriedData = query
+
+	switch reflect.TypeOf(result).Elem() {
+	case reflect.TypeOf(indexedData{}):
+		result = []interface{}{indexedDataFixture}
+	case reflect.TypeOf(nestedIndexedData{}):
+		result = []interface{}{nestedIndexedDataFixture}
+	case reflect.TypeOf(deeplyNestedIndexedData{}):
+		result = []interface{}{deeplyNestedIndexedDataFixture}
+	default:
+		return storage.NotFound
+	}
+
+	return nil
 }
