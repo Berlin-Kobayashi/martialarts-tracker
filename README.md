@@ -19,6 +19,7 @@ See examples directory
 
 
 ## TODOs
+ - get referenced by
  - delete all references
  - read all
  - extract service package to own package
