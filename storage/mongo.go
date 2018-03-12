@@ -109,7 +109,6 @@ func createMongoQuery(q query.Query) bson.M {
 	mq := bson.M{}
 	or := make([]bson.M, 0)
 	and := make([]bson.M, 0)
-
 	for k, v := range q.Q {
 		if k == "ID" {
 			k = "_id"
@@ -125,13 +124,14 @@ func createMongoQuery(q query.Query) bson.M {
 			and = append(and, fieldQueries...)
 		case query.KindOr:
 			or = append(or, fieldQueries...)
+		case query.KindContains:
+			mq[k] = bson.M{"$in": v.Values}
 		}
 	}
 
 	if len(or) != 0 {
 		mq["$or"] = or
 	}
-
 	if len(and) != 0 {
 		mq["$and"] = and
 	}

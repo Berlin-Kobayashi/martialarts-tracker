@@ -1,7 +1,10 @@
 package query
 
-const KindAnd = kind("AND")
-const KindOr = kind("OR")
+const (
+	KindAnd      kind = iota
+	KindOr
+	KindContains
+)
 
 type Query struct {
 	Q map[string]FieldQuery
@@ -12,4 +15,4 @@ type FieldQuery struct {
 	Values []interface{}
 }
 
-type kind string
+type kind uint
