@@ -74,6 +74,8 @@ func (s StorageService) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		switch action {
 		case ActionExpand:
 			s.expand(rw, r, t, index)
+		case ActionReferencedBy:
+			s.getReferencedBy(rw, r, t, index)
 		default:
 			s.get(rw, r, t, index)
 		}
@@ -139,6 +141,33 @@ func (s StorageService) expand(rw http.ResponseWriter, r *http.Request, t reflec
 	if err != nil {
 		fmt.Println(err)
 		rw.WriteHeader(http.StatusNotFound)
+
+		return
+	}
+
+	response, err := json.Marshal(result)
+	if err != nil {
+		fmt.Println(err)
+		rw.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
+
+	rw.Write(response)
+}
+
+func (s StorageService) getReferencedBy(rw http.ResponseWriter, r *http.Request, t reflect.Type, index string) {
+	types := make([]reflect.Type, len(s.entityDefinitions))
+	i := 0
+	for _, ed := range s.entityDefinitions {
+		types[i] = ed
+		i++
+	}
+
+	result, err := GetReferencedBy(s.repository, index, t, types)
+	if err != nil {
+		fmt.Println(err)
+		rw.WriteHeader(http.StatusInternalServerError)
 
 		return
 	}

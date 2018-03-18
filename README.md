@@ -19,8 +19,8 @@ See examples directory
 
 
 ## TODOs
+ - make referenced by recursive
  - add dummy tests
- - get referenced by
  - delete all references
  - read all
  - extract service package to own package

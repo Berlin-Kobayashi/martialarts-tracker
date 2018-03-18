@@ -218,7 +218,12 @@ func GetReferencedBy(repository Repository, id string, resourceType reflect.Type
 			for i := 0; i < t.NumField(); i++ {
 				f := t.Field(i)
 
-				if f.Type == resourceType {
+				fType := f.Type
+				if fType.Kind() == reflect.Slice {
+					fType = fType.Elem()
+				}
+
+				if fType == resourceType {
 					var references []interface{}
 					q := query.Query{Q: map[string]query.FieldQuery{f.Name: {Kind: query.KindContains, Values: []interface{}{id}}}}
 					err := repository.ReadAll(t.Name(), q, &references)
