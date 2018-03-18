@@ -3,6 +3,8 @@ package service
 import (
 	"reflect"
 	"fmt"
+	"github.com/DanShu93/martialarts-tracker/query"
+	"github.com/DanShu93/martialarts-tracker/storage"
 )
 
 const idFieldName = "ID"
@@ -207,4 +209,31 @@ func CanReference(t reflect.Type) bool {
 	idField, hasID := t.FieldByName(idFieldName)
 
 	return hasID && idField.Type.Kind() == reflect.String
+}
+
+func GetReferencedBy(repository Repository, id string, resourceType reflect.Type, types []reflect.Type) (map[string]interface{}, error) {
+	result := map[string]interface{}{}
+	for _, t := range types {
+		if t.Kind() == reflect.Struct {
+			for i := 0; i < t.NumField(); i++ {
+				f := t.Field(i)
+
+				if f.Type == resourceType {
+					var references []interface{}
+					q := query.Query{Q: map[string]query.FieldQuery{f.Name: {Kind: query.KindContains, Values: []interface{}{id}}}}
+					err := repository.ReadAll(t.Name(), q, &references)
+					if err != nil {
+						if err == storage.NotFound {
+							references = []interface{}{}
+						} else {
+							return nil, err
+						}
+					}
+					result[t.Name()] = references
+				}
+			}
+		}
+	}
+
+	return result, nil
 }

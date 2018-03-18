@@ -77,7 +77,7 @@ func (s MongoRepository) Delete(collectionName, id string) error {
 	return nil
 }
 
-func (s MongoRepository) ReadAll(collectionName string, query query.Query, result interface{}) error {
+func (s MongoRepository) ReadAll(collectionName string, query query.Query, result *[]interface{}) error {
 	mq := createMongoQuery(query)
 	q := s.database.C(collectionName).Find(mq)
 
@@ -95,7 +95,7 @@ func (s MongoRepository) ReadAll(collectionName string, query query.Query, resul
 		return err
 	}
 
-	resultSlice := *result.(*[]interface{})
+	resultSlice := *result
 
 	for i := range resultSlice {
 		resultSlice[i].(bson.M)["ID"] = resultSlice[i].(bson.M)["_id"]

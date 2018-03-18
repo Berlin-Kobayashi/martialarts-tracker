@@ -3,6 +3,7 @@ package service
 import (
 	"testing"
 	"reflect"
+	"github.com/DanShu93/martialarts-tracker/query"
 )
 
 func TestAssertExistingResource(t *testing.T) {
@@ -17,7 +18,7 @@ func TestAssertExistingResource(t *testing.T) {
 
 func TestAssertExistingResourceForMissingReference(t *testing.T) {
 	input := createReferenceFixture()
-	input["SlicedIndexedData"] = []string{"123"}
+	input["SlicedIndexedData"] = []string{missingIDFixture}
 	err := AssertExistingResource(dummyRepository{}, input, reflect.TypeOf(indexedData{}))
 
 	if err == nil {
@@ -27,7 +28,7 @@ func TestAssertExistingResourceForMissingReference(t *testing.T) {
 
 func TestAssertExistingReferencesForMissingResource(t *testing.T) {
 	input := createReferenceFixture()
-	input["ID"] = "123"
+	input["ID"] = missingIDFixture
 	err := AssertExistingReferences(dummyRepository{}, input, reflect.TypeOf(indexedData{}))
 
 	if err != nil {
@@ -128,5 +129,32 @@ func TestDerefence(t *testing.T) {
 
 	if !reflect.DeepEqual(actual, &expected) {
 		t.Errorf("Unexpected result\n\n Actual: %+v\n\n Expected: %+v", actual, expected)
+	}
+}
+
+func TestGetReferencedBy(t *testing.T) {
+	expected := map[string]interface{}{
+		"indexedData": []interface{}{createReferenceFixture()},
+	}
+
+	actual, err := GetReferencedBy(dummyRepository{}, nestedIDFixture, reflect.TypeOf(nestedIndexedData{}), []reflect.Type{
+		reflect.TypeOf(indexedData{}),
+		reflect.TypeOf(nestedIndexedData{}),
+		reflect.TypeOf(deeplyNestedIndexedData{}),
+		reflect.TypeOf(nestedData{}),
+	})
+
+	expectedQuery := query.Query{Q: map[string]query.FieldQuery{"NestedIndexedData": {Kind: query.KindContains, Values: []interface{}{nestedIDFixture}}}}
+
+	if err != nil {
+		t.Fatalf("Unexpected error %q", err)
+	}
+
+	if !reflect.DeepEqual(queriedData, expectedQuery) {
+		t.Errorf("Unexpected query.\nActual: %+v\nExpected %+v", queriedData, expectedQuery)
+	}
+
+	if !reflect.DeepEqual(actual, expected) {
+		t.Errorf("Unexpected result.\nActual: %+v\nExpected %+v", actual, expected)
 	}
 }

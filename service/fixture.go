@@ -63,3 +63,5 @@ var nestedDataValueFixture = "myNestedData"
 var nestedIndexedDataValueFixture = "myNestedIndexedData"
 
 var uuidV4Fixture = "b5e57615-0f40-404e-bbe0-6ae81fe8080a"
+
+var missingIDFixture = "123"

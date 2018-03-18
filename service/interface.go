@@ -7,7 +7,7 @@ type Repository interface {
 	Read(collectionName string, id string, result *interface{}) error
 	Update(collectionName string, id string, data interface{}) error
 	Delete(collectionName string, id string) error
-	ReadAll(collectionName string, query query.Query, result interface{}) error
+	ReadAll(collectionName string, query query.Query, result *[]interface{}) error
 }
 
 type IDGenerator interface {

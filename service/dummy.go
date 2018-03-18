@@ -28,8 +28,12 @@ func (s dummyRepository) Create(collectionName string, data interface{}) error {
 }
 
 func (s dummyRepository) Read(collectionName string, id string, result *interface{}) error {
-	switch id {
-	case idFixture:
+	if id == missingIDFixture {
+		return storage.NotFound
+	}
+
+	switch collectionName {
+	case reflect.TypeOf(indexedData{}).Name():
 		*result = map[string]interface{}{
 			"ID":   idFixture,
 			"Data": dataValueFixture,
@@ -40,13 +44,13 @@ func (s dummyRepository) Read(collectionName string, id string, result *interfac
 			"NestedIndexedData": nestedIDFixture,
 			"SlicedIndexedData": []string{deeplyNestedIDFixture},
 		}
-	case nestedIDFixture:
+	case reflect.TypeOf(nestedIndexedData{}).Name():
 		*result = map[string]interface{}{
 			"ID":                      nestedIDFixture,
 			"Data":                    nestedIndexedDataValueFixture,
 			"DeeplyNestedIndexedData": deeplyNestedIDFixture,
 		}
-	case deeplyNestedIDFixture:
+	case reflect.TypeOf(deeplyNestedIndexedData{}).Name():
 		*result = map[string]interface{}{
 			"ID":   deeplyNestedIDFixture,
 			"Data": deeplyNestedDataValueFixture,
@@ -75,19 +79,17 @@ func (s dummyRepository) Delete(collectionName string, id string) error {
 	return storage.NotFound
 }
 
-func (s dummyRepository) ReadAll(collectionName string, query query.Query, result interface{}) error {
+func (s dummyRepository) ReadAll(collectionName string, query query.Query, result *[]interface{}) error {
 	queriedData = query
 
-	switch reflect.TypeOf(result).Elem() {
-	case reflect.TypeOf(indexedData{}):
-		result = []interface{}{indexedDataFixture}
-	case reflect.TypeOf(nestedIndexedData{}):
-		result = []interface{}{nestedIndexedDataFixture}
-	case reflect.TypeOf(deeplyNestedIndexedData{}):
-		result = []interface{}{deeplyNestedIndexedDataFixture}
-	default:
-		return storage.NotFound
+	var data interface{}
+
+	err := s.Read(collectionName, "", &data)
+	if err != nil {
+		return err
 	}
+
+	*result = []interface{}{data}
 
 	return nil
 }
