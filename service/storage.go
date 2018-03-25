@@ -24,7 +24,7 @@ type EntityDefinitions map[string]reflect.Type
 
 func (e EntityDefinitions) validate() error {
 	for _, t := range e {
-		if !CanReference(t) {
+		if !CanBeReferenced(t) {
 			return fmt.Errorf("all entities have to be referenceable by having an ID string field but %q does not", t.Name())
 		}
 	}

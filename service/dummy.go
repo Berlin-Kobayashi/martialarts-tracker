@@ -16,7 +16,7 @@ func (g dummyUUIDGenerator) Generate() string {
 var savedData interface{}
 var updatedData interface{}
 var deletedData []string
-var queriedData query.Query
+var queriedData []query.Query
 
 type dummyRepository struct {
 }
@@ -33,27 +33,19 @@ func (s dummyRepository) Read(collectionName string, id string, result *interfac
 	}
 
 	switch collectionName {
-	case reflect.TypeOf(indexedData{}).Name():
+	case reflect.TypeOf(referencingData{}).Name():
 		*result = map[string]interface{}{
-			"ID":   idFixture,
-			"Data": dataValueFixture,
-			"NestedData": map[string]interface{}{
-				"Data":                    nestedDataValueFixture,
-				"DeeplyNestedIndexedData": deeplyNestedIDFixture,
+			"ID":   referencingIDFixture,
+			"Data": referencingValueFixture,
+			"References": map[string]interface{}{
+				"Single":   referencedIDFixture,
+				"Multiple": []string{referencedIDFixture},
 			},
-			"NestedIndexedData": nestedIDFixture,
-			"SlicedIndexedData": []string{deeplyNestedIDFixture},
 		}
-	case reflect.TypeOf(nestedIndexedData{}).Name():
+	case reflect.TypeOf(referencedData{}).Name():
 		*result = map[string]interface{}{
-			"ID":                      nestedIDFixture,
-			"Data":                    nestedIndexedDataValueFixture,
-			"DeeplyNestedIndexedData": deeplyNestedIDFixture,
-		}
-	case reflect.TypeOf(deeplyNestedIndexedData{}).Name():
-		*result = map[string]interface{}{
-			"ID":   deeplyNestedIDFixture,
-			"Data": deeplyNestedDataValueFixture,
+			"ID":   referencedIDFixture,
+			"Data": referencedValueFixture,
 		}
 	default:
 		return storage.NotFound
@@ -70,7 +62,7 @@ func (s dummyRepository) Update(collectionName string, id string, data interface
 
 func (s dummyRepository) Delete(collectionName string, id string) error {
 	switch id {
-	case idFixture, nestedIDFixture, deeplyNestedIDFixture:
+	case referencingIDFixture, referencedIDFixture:
 		deletedData = append(deletedData, id)
 
 		return nil
@@ -80,7 +72,7 @@ func (s dummyRepository) Delete(collectionName string, id string) error {
 }
 
 func (s dummyRepository) ReadAll(collectionName string, query query.Query, result *[]interface{}) error {
-	queriedData = query
+	queriedData = append(queriedData, query)
 
 	var data interface{}
 

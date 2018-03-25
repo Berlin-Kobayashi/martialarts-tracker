@@ -18,7 +18,7 @@ var storageService = createStorageService()
 func TestNewStorageService(t *testing.T) {
 	expected := StorageService{
 		entityDefinitions: EntityDefinitions{
-			entityName: reflect.TypeOf(deeplyNestedIndexedData{}),
+			entityName: reflect.TypeOf(referencedData{}),
 		},
 		repository:  dummyRepository{},
 		idGenerator: dummyUUIDGenerator{},
@@ -72,13 +72,13 @@ func TestNewStorageServiceWrongIDTypeEntity(t *testing.T) {
 }
 
 func TestStorageService_ServeHTTPGET(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s/%s", entityName, deeplyNestedIDFixture), nil)
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s/%s", entityName, referencedIDFixture), nil)
 	w := httptest.NewRecorder()
 	storageService.ServeHTTP(w, req)
 
 	expected := map[string]interface{}{
-		"ID":   deeplyNestedIDFixture,
-		"Data": deeplyNestedDataValueFixture,
+		"ID":   referencedIDFixture,
+		"Data": referencedValueFixture,
 	}
 
 	content, err := ioutil.ReadAll(w.Result().Body)
@@ -97,13 +97,13 @@ func TestStorageService_ServeHTTPGET(t *testing.T) {
 }
 
 func TestStorageService_ServeHTTPGETExpand(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s/%s/%s", entityName, ActionExpand, deeplyNestedIDFixture), nil)
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s/%s/%s", entityName, ActionExpand, referencedIDFixture), nil)
 	w := httptest.NewRecorder()
 	storageService.ServeHTTP(w, req)
 
 	expected := map[string]interface{}{
-		"ID":   deeplyNestedIDFixture,
-		"Data": deeplyNestedDataValueFixture,
+		"ID":   referencedIDFixture,
+		"Data": referencedValueFixture,
 	}
 
 	content, err := ioutil.ReadAll(w.Result().Body)
@@ -122,7 +122,7 @@ func TestStorageService_ServeHTTPGETExpand(t *testing.T) {
 }
 
 func TestStorageService_ServeHTTPGETReferencedBy(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s/%s/%s", entityName, ActionReferencedBy, deeplyNestedIDFixture), nil)
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s/%s/%s", entityName, ActionReferencedBy, referencedIDFixture), nil)
 	w := httptest.NewRecorder()
 	storageService.ServeHTTP(w, req)
 
@@ -150,11 +150,11 @@ func TestStorageService_ServeHTTPPOST(t *testing.T) {
 
 	expected := map[string]interface{}{
 		"ID":   uuidV4Fixture,
-		"Data": deeplyNestedDataValueFixture,
+		"Data": referencedValueFixture,
 	}
 
 	if !reflect.DeepEqual(savedData, expected) {
-		t.Errorf("Does not save expected data. Actual %v Expected %v", savedData, deeplyNestedIndexedDataFixture)
+		t.Errorf("Does not save expected data. Actual %v Expected %v", savedData, referencedDataFixture)
 	}
 
 	content, err := ioutil.ReadAll(w.Result().Body)
@@ -182,7 +182,7 @@ func TestStorageService_ServeHTTPUnknownMethod(t *testing.T) {
 }
 
 func TestStorageService_ServeHTTPGETUnknownEntity(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/unknown/%s", deeplyNestedIDFixture), nil)
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/unknown/%s", referencedIDFixture), nil)
 	w := httptest.NewRecorder()
 	storageService.ServeHTTP(w, req)
 
@@ -202,17 +202,17 @@ func TestStorageService_ServeHTTPPOSTTUnknownEntity(t *testing.T) {
 }
 
 func TestStorageService_ServeHTTPPUT(t *testing.T) {
-	req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/%s/%s", entityName, deeplyNestedIDFixture), bytes.NewReader([]byte(getDataFixtureJSON(t))))
+	req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/%s/%s", entityName, referencedIDFixture), bytes.NewReader([]byte(getDataFixtureJSON(t))))
 	w := httptest.NewRecorder()
 	storageService.ServeHTTP(w, req)
 
 	expected := map[string]interface{}{
-		"ID":   deeplyNestedIDFixture,
-		"Data": deeplyNestedDataValueFixture,
+		"ID":   referencedIDFixture,
+		"Data": referencedValueFixture,
 	}
 
 	if !reflect.DeepEqual(updatedData, expected) {
-		t.Errorf("Does not update expected data. Actual %v Expected %v", updatedData, deeplyNestedIndexedDataFixture)
+		t.Errorf("Does not update expected data. Actual %v Expected %v", updatedData, referencedDataFixture)
 	}
 
 	content, err := ioutil.ReadAll(w.Result().Body)
@@ -240,14 +240,14 @@ func TestStorageService_ServeHTTPPUTUnknownResource(t *testing.T) {
 }
 
 func TestStorageService_ServeHTTPPUTNotMatchingIDs(t *testing.T) {
-	fixture := deeplyNestedIndexedDataFixture
+	fixture := referencedDataFixture
 	fixture.ID = "123"
 	fixtureJSON, err := json.Marshal(fixture)
 	if err != nil {
 		t.Errorf("Could not create data fixture.")
 	}
 
-	req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/%s/%s", entityName, deeplyNestedIDFixture), bytes.NewReader(fixtureJSON))
+	req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/%s/%s", entityName, referencedIDFixture), bytes.NewReader(fixtureJSON))
 	w := httptest.NewRecorder()
 	storageService.ServeHTTP(w, req)
 
@@ -257,11 +257,11 @@ func TestStorageService_ServeHTTPPUTNotMatchingIDs(t *testing.T) {
 }
 
 func TestStorageService_ServeHTTPDELETE(t *testing.T) {
-	req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/%s/%s", entityName, deeplyNestedIDFixture), bytes.NewReader([]byte(getDataFixtureJSON(t))))
+	req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/%s/%s", entityName, referencedIDFixture), bytes.NewReader([]byte(getDataFixtureJSON(t))))
 	w := httptest.NewRecorder()
 	storageService.ServeHTTP(w, req)
 
-	expected := []string{deeplyNestedIDFixture}
+	expected := []string{referencedIDFixture}
 
 	if !reflect.DeepEqual(deletedData, expected) {
 		t.Errorf("Does not delete expected data. Actual %v Expected %v", deletedData, expected)
@@ -289,7 +289,7 @@ func TestStorageService_ServeHTTPDELETEUnknownResource(t *testing.T) {
 func createStorageService() StorageService {
 	storageService, err := NewStorageService(
 		EntityDefinitions{
-			entityName: reflect.TypeOf(deeplyNestedIndexedData{}),
+			entityName: reflect.TypeOf(referencedData{}),
 		},
 		dummyUUIDGenerator{},
 		dummyRepository{},
@@ -303,7 +303,7 @@ func createStorageService() StorageService {
 }
 
 func getDataFixtureJSON(t *testing.T) string {
-	fixtureJSON, err := json.Marshal(deeplyNestedIndexedDataFixture)
+	fixtureJSON, err := json.Marshal(referencedDataFixture)
 
 	if err != nil {
 		t.Errorf("Could not create data fixture.")

@@ -2,55 +2,52 @@ package service
 
 import (
 	"reflect"
-	"fmt"
 	"github.com/DanShu93/martialarts-tracker/query"
 	"github.com/DanShu93/martialarts-tracker/storage"
+	"fmt"
 )
 
 const idFieldName = "ID"
+const referencesFieldName = "References"
 
 func GetReference(t reflect.Type) (interface{}, error) {
-	switch t.Kind() {
-	case reflect.Struct:
-		result := make(map[string]interface{}, t.NumField())
-		for i := 0; i < t.NumField(); i++ {
-			property := t.Field(i)
-			if property.Type.Kind() == reflect.Struct {
-				if CanReference(property.Type) {
-					result[property.Name] = reflect.New(reflect.TypeOf("")).Interface()
-				} else {
-					referencingEntity, err := GetReference(property.Type)
-					if err != nil {
-						return nil, err
-					}
-					result[property.Name] = referencingEntity
-				}
-			} else {
-				referencingEntity, err := GetReference(property.Type)
-				if err != nil {
-					return nil, err
-				}
-				result[property.Name] = referencingEntity
-			}
-		}
+	if !HasReferences(t) {
+		return reflect.New(t).Interface(), nil
+	}
 
-		return result, nil
-	case reflect.Map:
-		return nil, fmt.Errorf("unsupported field type %q", t.Kind())
-	case reflect.Slice:
-		property := t.Elem()
-		if property.Kind() == reflect.Struct {
-			if CanReference(property) {
-				return reflect.New(reflect.TypeOf([]string{})).Interface(), nil
-			} else {
-				return GetReference(property)
+	result := make(map[string]interface{}, t.NumField())
+	for i := 0; i < t.NumField(); i++ {
+		property := t.Field(i)
+		if property.Name == referencesFieldName {
+			referencesMap := make(map[string]interface{}, property.Type.NumField())
+			for j := 0; j < property.Type.NumField(); j++ {
+				reference := property.Type.Field(j)
+
+				switch reference.Type.Kind() {
+				case reflect.Struct:
+					if CanBeReferenced(reference.Type) {
+						referencesMap[reference.Name] = reflect.New(reflect.TypeOf("")).Interface()
+					} else {
+						return nil, fmt.Errorf("cannot reference stuct %q", reference.Type.Name())
+					}
+				case reflect.Slice:
+					if CanBeReferenced(reference.Type.Elem()) {
+						referencesMap[reference.Name] = reflect.New(reflect.TypeOf([]string{})).Interface()
+					} else {
+						return nil, fmt.Errorf("cannot reference slice of %q", reference.Type.Name())
+					}
+				default:
+					return nil, fmt.Errorf("cannot reference type %q", reference.Type.Name())
+				}
+
+				result[property.Name] = referencesMap
 			}
 		} else {
-			return GetReference(property)
+			result[property.Name] = reflect.New(property.Type).Interface()
 		}
 	}
 
-	return reflect.New(t).Interface(), nil
+	return result, nil
 }
 
 func Derefence(repository Repository, reference, result interface{}) error {
@@ -68,88 +65,42 @@ func Derefence(repository Repository, reference, result interface{}) error {
 		}
 	}
 
-	switch t.Kind() {
-	case reflect.Struct:
-		for i := 0; i < t.NumField(); i++ {
-			fieldValue := v.MapIndex(reflect.ValueOf(t.Field(i).Name)).Elem()
-			if CanReference(t.Field(i).Type) {
-				subReference, err := GetReference(t.Field(i).Type)
-				if err != nil {
-					return err
-				}
+	for i := 0; i < t.NumField(); i++ {
+		fieldValue := v.MapIndex(reflect.ValueOf(t.Field(i).Name)).Elem()
 
-				err = repository.Read(t.Field(i).Type.Name(), fieldValue.Interface().(string), &subReference)
-				if err != nil {
-					return err
-				}
+		if t.Field(i).Name == referencesFieldName {
+			for j := 0; j < t.Field(i).Type.NumField(); j++ {
+				referenceValue := fieldValue.MapIndex(reflect.ValueOf(t.Field(i).Type.Field(j).Name)).Elem()
+				fmt.Println(referenceValue)
 
-				subResult := reflect.New(t.Field(i).Type).Interface()
-				err = Derefence(repository, subReference, &subResult)
-				if err != nil {
-					return err
-				}
-
-				subResultValue := reflect.ValueOf(subResult)
-				if subResultValue.Kind() == reflect.Ptr {
-					subResultValue = subResultValue.Elem()
-				}
-				res.Field(i).Set(subResultValue)
-			} else {
-				switch t.Field(i).Type.Kind() {
-				case reflect.Struct, reflect.Slice:
-					subResult := reflect.New(t.Field(i).Type).Interface()
-					if t.Field(i).Type.Kind() == reflect.Slice {
-						subResult = reflect.MakeSlice(t.Field(i).Type, fieldValue.Len(), fieldValue.Cap()).Interface()
+				switch referenceValue.Kind() {
+				case reflect.String:
+					subReference, err := GetReference(t.Field(i).Type.Field(j).Type)
+					if err != nil {
+						return err
 					}
-					err := Derefence(repository, fieldValue.Interface(), &subResult)
+					err = repository.Read(t.Field(i).Type.Field(j).Type.Name(), referenceValue.Interface().(string), &subReference)
 					if err != nil {
 						return err
 					}
 
-					subResultValue := reflect.ValueOf(subResult)
-					if subResultValue.Kind() == reflect.Ptr {
-						subResultValue = subResultValue.Elem()
-					}
-					res.Field(i).Set(subResultValue)
+					res.Field(i).Field(j).Set(reflect.ValueOf(subReference))
+				case reflect.Slice:
 				default:
-					res.Field(i).Set(fieldValue)
-				}
-			}
-		}
-		return nil
-	case reflect.Slice:
-		for i := 0; i < v.Len(); i++ {
-			fieldValue := v.Index(i)
-			if CanReference(t.Elem()) {
-				subReference, err := GetReference(t.Elem())
-				if err != nil {
-					return err
-				}
-				err = repository.Read(t.Elem().Name(), fieldValue.Interface().(string), &subReference)
-				if err != nil {
-					return err
+					return fmt.Errorf("cannot dereference ID %q", fieldValue)
 				}
 
-				subResult := reflect.New(t.Elem()).Interface()
-				err = Derefence(repository, subReference, &subResult)
-				if err != nil {
-					return err
-				}
-
-				subResultValue := reflect.ValueOf(subResult)
-				if subResultValue.Kind() == reflect.Ptr {
-					subResultValue = subResultValue.Elem()
-				}
-				res.Index(i).Set(subResultValue)
-			} else {
-				res.Index(i).Set(fieldValue)
 			}
+		} else {
+			res.Field(i).Set(fieldValue)
 		}
-	default:
-		*result.(*interface{}) = reference
 	}
 
 	return nil
+}
+
+func toStruct(source map[string]interface{}, target interface{}) {
+	// TODO implement
 }
 
 func AssertExistingResource(repository Repository, reference interface{}, t reflect.Type) error {
@@ -164,7 +115,7 @@ func assertExistingResourceRecursively(repository Repository, reference interfac
 	v := reflect.ValueOf(reference)
 	switch t.Kind() {
 	case reflect.Struct:
-		if checkRoot && CanReference(t) {
+		if checkRoot && CanBeReferenced(t) {
 			id := ""
 			if v.Kind() == reflect.String {
 				id = v.Interface().(string)
@@ -201,7 +152,7 @@ func assertExistingResourceRecursively(repository Repository, reference interfac
 	return nil
 }
 
-func CanReference(t reflect.Type) bool {
+func CanBeReferenced(t reflect.Type) bool {
 	if t.Kind() != reflect.Struct {
 		return false
 	}
@@ -209,6 +160,16 @@ func CanReference(t reflect.Type) bool {
 	idField, hasID := t.FieldByName(idFieldName)
 
 	return hasID && idField.Type.Kind() == reflect.String
+}
+
+func HasReferences(t reflect.Type) bool {
+	if !CanBeReferenced(t) {
+		return false
+	}
+
+	referencesField, hasReferences := t.FieldByName(referencesFieldName)
+
+	return hasReferences && referencesField.Type.Kind() == reflect.Struct
 }
 
 func GetReferencedBy(repository Repository, id string, resourceType reflect.Type, types []reflect.Type) (map[string]interface{}, error) {

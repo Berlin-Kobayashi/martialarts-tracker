@@ -1,66 +1,50 @@
 package service
 
-type indexedData struct {
-	ID                string
-	Data              string
-	NestedData        nestedData
-	NestedIndexedData nestedIndexedData
-	SlicedIndexedData []deeplyNestedIndexedData
+type referencingData struct {
+	ID         string
+	Data       string
+	NestedData nestedData
+	References referencingDataReferences
+}
+
+type referencingDataReferences struct {
+	Single   referencedData
+	Multiple []referencedData
 }
 
 type nestedData struct {
-	Data                    string
-	DeeplyNestedIndexedData deeplyNestedIndexedData
+	Data string
 }
 
-type nestedIndexedData struct {
-	ID                      string
-	Data                    string
-	DeeplyNestedIndexedData deeplyNestedIndexedData
-}
-
-type deeplyNestedIndexedData struct {
+type referencedData struct {
 	ID   string
 	Data string
 }
 
-type unsupportedFieldMap struct {
-	ID  string
-	Map map[string]string
-}
-
-var indexedDataFixture = indexedData{
-	ID:                idFixture,
-	Data:              dataValueFixture,
-	NestedData:        nestedDataFixture,
-	NestedIndexedData: nestedIndexedDataFixture,
-	SlicedIndexedData: []deeplyNestedIndexedData{deeplyNestedIndexedDataFixture},
+var referencingDataFixture = referencingData{
+	ID:         referencingIDFixture,
+	Data:       referencingValueFixture,
+	NestedData: nestedDataFixture,
+	References: referencingDataReferences{
+		Single:   referencedDataFixture,
+		Multiple: []referencedData{referencedDataFixture},
+	},
 }
 
 var nestedDataFixture = nestedData{
-	Data:                    nestedDataValueFixture,
-	DeeplyNestedIndexedData: deeplyNestedIndexedDataFixture,
+	Data: nestedValueFixture,
 }
 
-var nestedIndexedDataFixture = nestedIndexedData{
-	ID:                      nestedIDFixture,
-	Data:                    nestedIndexedDataValueFixture,
-	DeeplyNestedIndexedData: deeplyNestedIndexedDataFixture,
+var referencedDataFixture = referencedData{
+	ID:   referencedIDFixture,
+	Data: referencedValueFixture,
 }
 
-var deeplyNestedIndexedDataFixture = deeplyNestedIndexedData{
-	ID:   deeplyNestedIDFixture,
-	Data: deeplyNestedDataValueFixture,
-}
-
-var idFixture = "myID"
-var nestedIDFixture = "myNestedID"
-var deeplyNestedIDFixture = "deeplyNestedID"
-var deeplyNestedDataValueFixture = "myDeeplyNestedData"
-
-var dataValueFixture = "myData"
-var nestedDataValueFixture = "myNestedData"
-var nestedIndexedDataValueFixture = "myNestedIndexedData"
+var referencingIDFixture = "referencingID"
+var referencedIDFixture = "referencedID"
+var referencedValueFixture = "referencedData"
+var referencingValueFixture = "value"
+var nestedValueFixture = "nestedValue"
 
 var uuidV4Fixture = "b5e57615-0f40-404e-bbe0-6ae81fe8080a"
 

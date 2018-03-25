@@ -7,9 +7,9 @@ import (
 )
 
 func TestAssertExistingResource(t *testing.T) {
-	input := createReferenceFixture()
+	input := createReferencingFixture()
 
-	err := AssertExistingResource(dummyRepository{}, input, reflect.TypeOf(indexedData{}))
+	err := AssertExistingResource(dummyRepository{}, input, reflect.TypeOf(referencingData{}))
 
 	if err != nil {
 		t.Fatalf("Unexpected error %s", err)
@@ -17,9 +17,9 @@ func TestAssertExistingResource(t *testing.T) {
 }
 
 func TestAssertExistingResourceForMissingReference(t *testing.T) {
-	input := createReferenceFixture()
+	input := createReferencingFixture()
 	input["SlicedIndexedData"] = []string{missingIDFixture}
-	err := AssertExistingResource(dummyRepository{}, input, reflect.TypeOf(indexedData{}))
+	err := AssertExistingResource(dummyRepository{}, input, reflect.TypeOf(referencingData{}))
 
 	if err == nil {
 		t.Error("Expected error")
@@ -27,9 +27,9 @@ func TestAssertExistingResourceForMissingReference(t *testing.T) {
 }
 
 func TestAssertExistingReferencesForMissingResource(t *testing.T) {
-	input := createReferenceFixture()
+	input := createReferencingFixture()
 	input["ID"] = missingIDFixture
-	err := AssertExistingReferences(dummyRepository{}, input, reflect.TypeOf(indexedData{}))
+	err := AssertExistingReferences(dummyRepository{}, input, reflect.TypeOf(referencingData{}))
 
 	if err != nil {
 		t.Errorf("Unexpected error %q", err)
@@ -37,17 +37,16 @@ func TestAssertExistingReferencesForMissingResource(t *testing.T) {
 }
 
 func TestGetReference(t *testing.T) {
-	input := reflect.TypeOf(indexedDataFixture)
+	input := reflect.TypeOf(referencingDataFixture)
 
 	expected := map[string]interface{}{
 		"ID":   reflect.New(reflect.TypeOf("")).Interface(),
 		"Data": reflect.New(reflect.TypeOf("")).Interface(),
-		"NestedData": map[string]interface{}{
-			"Data":                    reflect.New(reflect.TypeOf("")).Interface(),
-			"DeeplyNestedIndexedData": reflect.New(reflect.TypeOf("")).Interface(),
+		"NestedData" : reflect.New(reflect.TypeOf(nestedData{})).Interface(),
+		"References": map[string]interface{}{
+			"Single":   reflect.New(reflect.TypeOf("")).Interface(),
+			"Multiple": reflect.New(reflect.TypeOf([]string{})).Interface(),
 		},
-		"NestedIndexedData": reflect.New(reflect.TypeOf("")).Interface(),
-		"SlicedIndexedData": reflect.New(reflect.TypeOf([]string{})).Interface(),
 	}
 
 	actual, err := GetReference(input)
@@ -61,37 +60,14 @@ func TestGetReference(t *testing.T) {
 	}
 }
 
-func TestGetReferenceUnsupportedFieldType(t *testing.T) {
-	input := reflect.TypeOf(unsupportedFieldMap{})
-
-	_, err := GetReference(input)
-
-	if err == nil {
-		t.Error("Expected error")
-	}
-}
-
-func createReferenceFixture() map[string]interface{} {
-	return map[string]interface{}{
-		"ID":   idFixture,
-		"Data": dataValueFixture,
-		"NestedData": map[string]interface{}{
-			"Data":                    nestedDataValueFixture,
-			"DeeplyNestedIndexedData": deeplyNestedIDFixture,
-		},
-		"NestedIndexedData": nestedIDFixture,
-		"SlicedIndexedData": []string{deeplyNestedIDFixture},
-	}
-}
-
-func TestCanReference(t *testing.T) {
+func TestCanBeReferenced(t *testing.T) {
 	cases := []struct {
-		t            reflect.Type
-		canReference bool
-		name         string
+		t               reflect.Type
+		canBeReferenced bool
+		name            string
 	}{
 		{
-			reflect.TypeOf(deeplyNestedIndexedData{}),
+			reflect.TypeOf(referencedData{}),
 			true,
 			"Legal",
 		},
@@ -112,17 +88,56 @@ func TestCanReference(t *testing.T) {
 		},
 	}
 	for _, c := range cases {
-		if CanReference(c.t) != c.canReference {
-			t.Errorf("Does not return expected result for %q type", c.name)
+		if CanBeReferenced(c.t) != c.canBeReferenced {
+			t.Errorf("Does not return expected result for %q", c.name)
+		}
+	}
+}
+
+func TestHasReferences(t *testing.T) {
+	cases := []struct {
+		t             reflect.Type
+		hasReferences bool
+		name          string
+	}{
+		{
+			reflect.TypeOf(referencingData{}),
+			true,
+			"Legal",
+		},
+		{
+			reflect.TypeOf(referencedData{}),
+			false,
+			"NoReferences",
+		},
+		{
+			reflect.TypeOf(1),
+			false,
+			"WrongType",
+		},
+		{
+			reflect.TypeOf(struct{}{}),
+			false,
+			"NoID",
+		},
+		{
+			reflect.TypeOf(struct{ ID int }{}),
+			false,
+			"WrongIDType",
+		},
+	}
+	for _, c := range cases {
+		if HasReferences(c.t) != c.hasReferences {
+			t.Errorf("Does not return expected result for %q", c.name)
 		}
 	}
 }
 
 func TestDerefence(t *testing.T) {
-	expected := indexedDataFixture
-	actual := reflect.New(reflect.TypeOf(indexedData{})).Interface()
+	expected := referencingDataFixture
+	actual := reflect.New(reflect.TypeOf(referencingData{})).Interface()
 
-	err := Derefence(dummyRepository{}, createReferenceFixture(), &actual)
+	err := Derefence(dummyRepository{}, createReferencingFixture(), &actual)
 	if err != nil {
 		t.Fatalf("Unexpected error %s", err)
 	}
@@ -133,18 +148,21 @@ func TestDerefence(t *testing.T) {
 }
 
 func TestGetReferencedBy(t *testing.T) {
+	queriedData = []query.Query{}
 	expected := map[string]interface{}{
-		"indexedData": []interface{}{createReferenceFixture()},
+		"referencingData": []interface{}{createReferencingFixture()},
 	}
 
-	actual, err := GetReferencedBy(dummyRepository{}, nestedIDFixture, reflect.TypeOf(nestedIndexedData{}), []reflect.Type{
-		reflect.TypeOf(indexedData{}),
-		reflect.TypeOf(nestedIndexedData{}),
-		reflect.TypeOf(deeplyNestedIndexedData{}),
+	actual, err := GetReferencedBy(dummyRepository{}, referencedIDFixture, reflect.TypeOf(referencedData{}), []reflect.Type{
+		reflect.TypeOf(referencingData{}),
+		reflect.TypeOf(referencedData{}),
 		reflect.TypeOf(nestedData{}),
 	})
 
-	expectedQuery := query.Query{Q: map[string]query.FieldQuery{"NestedIndexedData": {Kind: query.KindContains, Values: []interface{}{nestedIDFixture}}}}
+	expectedQuery := []query.Query{
+		{Q: map[string]query.FieldQuery{"References.Single": {Kind: query.KindAnd, Values: []interface{}{referencedIDFixture}}}},
+		{Q: map[string]query.FieldQuery{"References.Multiple": {Kind: query.KindContains, Values: []interface{}{referencedIDFixture}}}},
+	}
 
 	if err != nil {
 		t.Fatalf("Unexpected error %q", err)
@@ -156,5 +174,17 @@ func TestGetReferencedBy(t *testing.T) {
 
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("Unexpected result.\nActual: %+v\nExpected %+v", actual, expected)
+	}
+}
+
+func createReferencingFixture() map[string]interface{} {
+	return map[string]interface{}{
+		"ID":   referencingIDFixture,
+		"Data": referencingValueFixture,
+		"NestedData" : nestedDataFixture,
+		"References": map[string]interface{}{
+			"Single":   referencedIDFixture,
+			"Multiple": []string{referencedIDFixture},
+		},
 	}
 }
