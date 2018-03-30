@@ -2,12 +2,40 @@ package main
 
 import (
 	"net/http"
-	"github.com/DanShu93/martialarts-tracker/storage"
-	"github.com/DanShu93/martialarts-tracker/service"
-	"github.com/DanShu93/martialarts-tracker/entity"
+	"github.com/DanShu93/jsonmancer/mongo"
+	"github.com/DanShu93/jsonmancer/storage"
+	"gopkg.in/mgo.v2"
+	"github.com/DanShu93/jsonmancer/uuid"
 	"reflect"
-	"github.com/DanShu93/martialarts-tracker/uuid"
 )
+
+type TrainingUnit struct {
+	ID     string
+	Start  string
+	End    string
+	Series string
+}
+
+type Technique struct {
+	ID          string
+	Kind        string
+	Name        string
+	Description string
+}
+
+type Method struct {
+	ID          string
+	Kind        string
+	Name        string
+	Description string
+}
+
+type Exercise struct {
+	ID          string
+	Kind        string
+	Name        string
+	Description string
+}
 
 func main() {
 	mongoURL := "martialarts-tracker-db:27017"
@@ -23,21 +51,65 @@ func main() {
 	http.ListenAndServe(":80", nil)
 }
 
-func build(mongoURL, mongoDB string) (service.StorageService, error) {
-	repository, err := storage.NewMongoRepository(
+func build(mongoURL, mongoDB string) (http.Handler, error) {
+	session, err := mgo.Dial(mongoURL)
+	if err != nil {
+		panic(err)
+	}
+
+	err = session.DB(mongoDB).DropDatabase()
+	if err != nil {
+		panic(err)
+	}
+
+	repository, err := mongo.New(
 		mongoURL,
 		mongoDB,
 	)
 	if err != nil {
-		return service.StorageService{}, err
+		panic(err)
 	}
 
-	entityDefinitions := service.EntityDefinitions{
-		"training-unit": reflect.TypeOf(entity.TrainingUnit{}),
-		"technique":     reflect.TypeOf(entity.Technique{}),
-		"method":        reflect.TypeOf(entity.Method{}),
-		"exercise":      reflect.TypeOf(entity.Exercise{}),
+	technique := storage.Entity{
+		Name:       "technique",
+		Data:       reflect.TypeOf(Technique{}),
+		References: map[string]storage.Entity{},
 	}
 
-	return service.NewStorageService(entityDefinitions, uuid.V4{}, repository)
+	exercise := storage.Entity{
+		Name:       "exercise",
+		Data:       reflect.TypeOf(Exercise{}),
+		References: map[string]storage.Entity{},
+	}
+
+	method := storage.Entity{
+		Name: "method",
+		Data: reflect.TypeOf(Method{}),
+		References: map[string]storage.Entity{
+			"covers": technique,
+		},
+	}
+	trainingUnit := storage.Entity{
+		Name: "trainingunit",
+		Data: reflect.TypeOf(TrainingUnit{}),
+		References: map[string]storage.Entity{
+			"techniques": technique,
+			"exercises":  exercise,
+			"methods":    method,
+		},
+	}
+
+	entities := []storage.Entity{
+		technique,
+		exercise,
+		method,
+		trainingUnit,
+	}
+
+	store, err := storage.New(entities, repository, uuid.V4{})
+	if err != nil {
+		panic(err)
+	}
+
+	return storage.Service{Storage: store}, nil
 }
