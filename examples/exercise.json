@@ -1,8 +1,0 @@
-{
-  "id": "4da2ab63-d83d-4b14-8cf0-e0d8eb815ce8",
-  "data": {
-    "kind": "Software package",
-    "name": "Filesystem database",
-    "description": "Persist and structure data in a filesystem."
-  }
-}
