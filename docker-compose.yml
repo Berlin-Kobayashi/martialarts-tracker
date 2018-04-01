@@ -1,7 +1,7 @@
 version: "3.3"
 
 services:
-  martialarts-tracker-app:
+  api:
     image: golang:1.10
     working_dir: /go/src/github.com/DanShu93/martialarts-tracker
     volumes:
@@ -9,7 +9,11 @@ services:
     command: bash -c "cd /go/src/github.com/DanShu93/martialarts-tracker && go get ./... && go run /go/src/github.com/DanShu93/martialarts-tracker/cmd/server/server.go"
     ports:
       - 8888:80
-  martialarts-tracker-db:
+  db:
     image: mongo:3.6
     ports:
       - 27017:27017
+networks:
+  default:
+    external:
+      name: martialarts-tracker

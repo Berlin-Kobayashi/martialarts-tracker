@@ -38,7 +38,7 @@ type Exercise struct {
 }
 
 func main() {
-	mongoURL := "martialarts-tracker-db:27017"
+	mongoURL := "db:27017"
 	mongoDB := "martialarts"
 
 	storageService, err := build(mongoURL, mongoDB)
