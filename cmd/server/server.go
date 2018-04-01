@@ -111,5 +111,5 @@ func build(mongoURL, mongoDB string) (http.Handler, error) {
 		panic(err)
 	}
 
-	return storage.Service{Storage: store}, nil
+	return storage.Service{Storage: store, Info: storage.Info{Title: "martialarts-tracker", Version: "0.0.1"}}, nil
 }
