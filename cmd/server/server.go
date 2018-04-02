@@ -10,31 +10,31 @@ import (
 )
 
 type TrainingUnit struct {
-	ID     string
-	Start  string
-	End    string
-	Series string
+	ID     string `json:"id"`
+	Start  string `json:"start"`
+	End    string `json:"end"`
+	Series string `json:"series"`
 }
 
 type Technique struct {
-	ID          string
-	Kind        string
-	Name        string
-	Description string
+	ID          string `json:"id"`
+	Kind        string `json:"kind"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 type Method struct {
-	ID          string
-	Kind        string
-	Name        string
-	Description string
+	ID          string `json:"id"`
+	Kind        string `json:"kind"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 type Exercise struct {
-	ID          string
-	Kind        string
-	Name        string
-	Description string
+	ID          string `json:"id"`
+	Kind        string `json:"kind"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 func main() {
