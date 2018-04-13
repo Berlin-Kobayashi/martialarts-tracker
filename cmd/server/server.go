@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"github.com/DanShu93/jsonmancer/mongo"
 	"github.com/DanShu93/jsonmancer/storage"
-	"gopkg.in/mgo.v2"
 	"github.com/DanShu93/jsonmancer/uuid"
 	"reflect"
 )
@@ -48,16 +47,6 @@ func main() {
 }
 
 func build(mongoURL, mongoDB string) (http.Handler, error) {
-	session, err := mgo.Dial(mongoURL)
-	if err != nil {
-		panic(err)
-	}
-
-	err = session.DB(mongoDB).DropDatabase()
-	if err != nil {
-		panic(err)
-	}
-
 	repository, err := mongo.New(
 		mongoURL,
 		mongoDB,
