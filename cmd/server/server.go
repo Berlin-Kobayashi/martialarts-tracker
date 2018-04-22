@@ -9,9 +9,9 @@ import (
 )
 
 type TrainingUnit struct {
-	Start  string `json:"start"`
-	End    string `json:"end"`
-	Series string `json:"series"`
+	Start   string `json:"start"`
+	Minutes int    `json:"minutes"`
+	Series  string `json:"series"`
 }
 
 type Technique struct {
