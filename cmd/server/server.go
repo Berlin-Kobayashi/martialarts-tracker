@@ -7,7 +7,6 @@ import (
 	"github.com/DanShu93/jsonmancer/uuid"
 	"reflect"
 	"os"
-	"fmt"
 )
 
 type TrainingUnit struct {
@@ -43,11 +42,7 @@ func main() {
 		panic(err)
 	}
 
-	http.Handle("/", storageService)
-
-	fmt.Println("Started")
-
-	err = http.ListenAndServe(":80", nil)
+	err = http.ListenAndServe(":80", storageService)
 	if err != nil {
 		panic(err)
 	}
