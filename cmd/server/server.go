@@ -6,6 +6,8 @@ import (
 	"github.com/DanShu93/jsonmancer/storage"
 	"github.com/DanShu93/jsonmancer/uuid"
 	"reflect"
+	"os"
+	"fmt"
 )
 
 type TrainingUnit struct {
@@ -33,7 +35,7 @@ type Exercise struct {
 }
 
 func main() {
-	mongoURL := "db:27017"
+	mongoURL := os.Getenv("DB")
 	mongoDB := "martialarts"
 
 	storageService, err := build(mongoURL, mongoDB)
@@ -43,7 +45,12 @@ func main() {
 
 	http.Handle("/", storageService)
 
-	http.ListenAndServe(":80", nil)
+	fmt.Println("Started")
+
+	err = http.ListenAndServe(":80", nil)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func build(mongoURL, mongoDB string) (http.Handler, error) {
