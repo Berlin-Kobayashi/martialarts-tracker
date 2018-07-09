@@ -33,6 +33,22 @@ type Exercise struct {
 	Description string `json:"description"`
 }
 
+type TokenMiddleware struct {
+	next http.Handler
+}
+
+func (s TokenMiddleware) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	if token, hasAuth := os.LookupEnv("TOKEN"); request.Method != http.MethodOptions && hasAuth {
+
+		if request.Header.Get("Authorization") != token {
+			writer.WriteHeader(http.StatusForbidden)
+			return
+		}
+	}
+
+	s.next.ServeHTTP(writer, request)
+}
+
 func main() {
 	mongoURL := os.Getenv("DB")
 	mongoDB := "martialarts"
@@ -42,7 +58,7 @@ func main() {
 		panic(err)
 	}
 
-	err = http.ListenAndServe(":80", storageService)
+	err = http.ListenAndServe(":80", TokenMiddleware{next: storageService})
 	if err != nil {
 		panic(err)
 	}
